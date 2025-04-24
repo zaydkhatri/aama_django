@@ -30,9 +30,9 @@ class ProductFilterForm(forms.Form):
         return cleaned_data
 
 class ReviewForm(forms.ModelForm):
-    images = forms.FileField(
+    images = forms.ImageField(
         required=False,
-        widget=forms.ClearableFileInput(attrs={'multiple': True, 'class': 'form-control'})
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
     )
     
     class Meta:

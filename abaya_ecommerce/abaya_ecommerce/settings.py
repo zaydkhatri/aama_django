@@ -178,6 +178,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Add this line
 ]
 
 ROOT_URLCONF = 'abaya_ecommerce.urls'
@@ -202,17 +203,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'abaya_ecommerce.wsgi.application'
 
 # Database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.getenv('DB_NAME', 'abaya_ecommerce'),
+#         'USER': os.getenv('DB_USER', 'root'),
+#         'PASSWORD': os.getenv('DB_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', 'localhost'),
+#         'PORT': os.getenv('DB_PORT', '3306'),
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#         },
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'abaya_ecommerce'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -241,17 +248,30 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # django-allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 minutes in seconds
-ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_UNIQUE_EMAIL = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+# ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+# ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 minutes in seconds
+# ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
+# ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+# LOGIN_REDIRECT_URL = '/'
+# LOGOUT_REDIRECT_URL = '/'
+
+# Updated Django Allauth settings
+ACCOUNT_LOGIN_METHODS = {'email'}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Replaces ACCOUNT_EMAIL_REQUIRED and ACCOUNT_USERNAME_REQUIRED
+ACCOUNT_UNIQUE_EMAIL = True  # This setting hasn't changed
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # This setting hasn't changed
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/5m'  # Replaces ACCOUNT_LOGIN_ATTEMPTS_LIMIT and ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT
+}
+ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True  # This setting hasn't changed
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # This setting hasn't changed
+LOGIN_REDIRECT_URL = '/'  # This setting hasn't changed
+LOGOUT_REDIRECT_URL = '/'  # This setting hasn't changed
 
 SITE_ID = 1
 

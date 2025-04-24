@@ -102,6 +102,10 @@ class Product(models.Model):
     
     def get_review_count(self):
         return self.reviews.filter(is_published=True).count()
+    
+    def get_default_image(self):
+        default_image = self.media.filter(is_default=True).first()
+        return default_image if default_image else None
 
 
 class ProductCategory(models.Model):

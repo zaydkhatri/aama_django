@@ -164,8 +164,8 @@
                             </a>
                         </div>
                         
-                        {% if product.media.filter(is_default=True).first %}
-                        <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}">
+                        {% if product.default_image %}
+                        <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
                         {% else %}
                         <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}">
                         {% endif %}
@@ -248,8 +248,8 @@
                                 </a>
                             </div>
                             
-                            {% if product.media.filter(is_default=True).first %}
-                            <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}">
+                            {% if product.default_image %}
+                            <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
                             {% else %}
                             <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}">
                             {% endif %}

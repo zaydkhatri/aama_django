@@ -61,6 +61,10 @@ def cart_detail(request):
     else:
         cart = get_or_create_guest_cart(request)
     
+    # Add default images to cart items
+    for item in cart.items.all():
+        item.product.default_image = item.product.get_default_image()
+    
     return render(request, 'carts/cart_detail.html', {'cart': cart})
 
 @require_POST

@@ -18,6 +18,9 @@ from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 
+from orders.models import Order
+from carts.models import Wishlist
+
 from .models import User, Address, NotificationPreference, Session
 from .forms import (
     CustomUserCreationForm, CustomAuthenticationForm, CustomPasswordResetForm,
@@ -218,10 +221,26 @@ def account_dashboard(request):
     addresses = Address.objects.filter(user=request.user)
     notification_prefs = NotificationPreference.objects.get_or_create(user=request.user)[0]
     
+    # For orders
+    recent_orders = Order.objects.filter(user=request.user).order_by('-created_at')[:5]
+    for order in recent_orders:
+        for item in order.items.all():
+            item.product.default_image = item.product.get_default_image()
+    
+    # For wishlist items
+    try:
+        wishlist = Wishlist.objects.get(user=request.user)
+        for item in wishlist.items.all():
+            item.product.default_image = item.product.get_default_image()
+    except Wishlist.DoesNotExist:
+        wishlist = None
+    
     return render(request, 'users/dashboard.html', {
         'user': request.user,
         'addresses': addresses,
-        'notification_prefs': notification_prefs
+        'notification_prefs': notification_prefs,
+        'recent_orders': recent_orders,
+        'wishlist': wishlist
     })
 
 @login_required

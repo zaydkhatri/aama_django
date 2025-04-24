@@ -45,7 +45,10 @@ def product_list(request):
     products = Product.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
     attributes = Attribute.objects.filter(is_active=True)
-    
+
+    for product in products:
+        product.default_image = product.get_default_image()
+        
     # Filtering
     form = ProductFilterForm(request.GET)
     if form.is_valid():

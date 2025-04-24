@@ -16,8 +16,16 @@ def home(request):
     # Get featured products
     featured_products = Product.objects.filter(is_active=True, is_featured=True)[:8]
     
+    # Add default images to featured products
+    for product in featured_products:
+        product.default_image = product.get_default_image()
+    
     # Get new arrivals
     new_arrivals = Product.objects.filter(is_active=True).order_by('-created_at')[:8]
+    
+    # Add default images to new arrivals
+    for product in new_arrivals:
+        product.default_image = product.get_default_image()
     
     # Get top categories
     top_categories = Category.objects.filter(is_active=True)[:6]

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}My Account | Abaya Elegance{% endblock %}
 
@@ -172,10 +173,10 @@
                                     {% for item in order.items.all|slice:":2" %}
                                         <div class="order-product">
                                             <div class="order-product-img">
-                                                {% if item.product.media.filter(is_default=True).first %}
-                                                    <img src="{{ item.product.media.filter(is_default=True).first.url }}" alt="{{ item.product.name }}">
+                                                {% if item.product.default_image %}
+                                                <img src="{{ item.product.default_image.url }}" alt="{{ item.product.name }}">
                                                 {% else %}
-                                                    <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ item.product.name }}">
+                                                <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ item.product.name }}">
                                                 {% endif %}
                                             </div>
                                             <div class="order-product-details">
