@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ product.name }} | Abaya Elegance{% endblock %}
 
@@ -35,10 +36,10 @@
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <div class="product-gallery">
                     <div class="product-gallery-main">
-                        {% if product.media.filter(is_default=True).first %}
-                        <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}" id="main-image">
+                        {% if product.default_media %}
+                        <img src="{{ product.default_media.url }}" alt="{{ product.name }}">
                         {% else %}
-                        <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}" id="main-image">
+                        <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
                         {% endif %}
                     </div>
                     
@@ -449,10 +450,10 @@
                             </a>
                         </div>
                         
-                        {% if product.media.filter(is_default=True).first %}
-                        <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}">
+                        {% if product.default_media %}
+                        <img src="{{ product.default_media.url }}" alt="{{ product.name }}">
                         {% else %}
-                        <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}">
+                        <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
                         {% endif %}
                     </div>
                     

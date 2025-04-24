@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Profile | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Update Profile</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Update Profile</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Update Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link active">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Profile Update Content -->
+            <div class="col-lg-9">
+                <!-- Personal Information Card -->
+                <div class="account-card mb-4">
+                    <h3 class="account-card-title">Personal Information</h3>
+                    
+                    <form method="post" action="{% url 'profile_update' %}" class="form-custom">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Full Name *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" value="{{ user.email }}" readonly disabled>
+                                <div class="form-text">Email address cannot be changed. Contact support for assistance.</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.phone.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex">
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                            <a href="{% url 'account_dashboard' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Change Password Card -->
+                <div class="account-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="account-card-title mb-0">Password & Security</h3>
+                        <a href="{% url 'change_password' %}" class="btn btn-outline-primary">Change Password</a>
+                    </div>
+                    
+                    <div class="security-tips">
+                        <h5>Security Tips</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-key fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h6>Strong Password</h6>
+                                        <p class="small">Use a mix of letters, numbers and special characters.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-sync-alt fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h6>Regular Updates</h6>
+                                        <p class="small">Change your password regularly for better security.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-user-shield fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h6>Unique Passwords</h6>
+                                        <p class="small">Use different passwords for different websites.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

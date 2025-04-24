@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order History | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">My Orders</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Orders</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link active">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Orders Content -->
+            <div class="col-lg-9">
+                <div class="account-card">
+                    <h3 class="account-card-title">Order History</h3>
+                    
+                    <!-- Filter & Search -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <form method="get" action="{% url 'order_history' %}">
+                                <div class="input-group">
+                                    <select name="status" class="form-select">
+                                        <option value="">All Orders</option>
+                                        <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>Pending</option>
+                                        <option value="PROCESSING" {% if request.GET.status == 'PROCESSING' %}selected{% endif %}>Processing</option>
+                                        <option value="SHIPPED" {% if request.GET.status == 'SHIPPED' %}selected{% endif %}>Shipped</option>
+                                        <option value="DELIVERED" {% if request.GET.status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
+                                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary">Filter</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="get" action="{% url 'order_history' %}">
+                                <div class="input-group">
+                                    <input type="text" name="search" class="form-control" placeholder="Search by order number" value="{{ request.GET.search|default:'' }}">
+                                    <button type="submit" class="btn btn-primary">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders List -->
+                    {% if orders %}
+                        {% for order in orders %}
+                            <div class="order-card mb-3">
+                                <div class="order-header">
+                                    <div>
+                                        <div class="order-id">Order #{{ order.order_number }}</div>
+                                        <div class="order-date">{{ order.created_at|date:"F d, Y" }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="order-status status-{{ order.status|lower }}">{{ order.get_status_display }}</div>
+                                    </div>
+                                </div>
+                                <div class="order-body">
+                                    {% for item in order.items.all %}
+                                        <div class="order-product">
+                                            <div class="order-product-img">
+                                                {% if item.product.default_image %}
+                                                <img src="{{ item.product.default_image.url }}" alt="{{ item.product.name }}">
+                                                {% else %}
+                                                <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ item.product.name }}">
+                                                {% endif %}
+                                            </div>
+                                            <div class="order-product-details">
+                                                <h5 class="order-product-name">{{ item.product.name }}</h5>
+                                                <div class="order-product-meta">
+                                                    Quantity: {{ item.quantity }}
+                                                </div>
+                                                <div class="order-product-price">₹{{ item.total }}</div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="order-footer">
+                                    <div class="order-total">Total: ₹{{ order.total }}</div>
+                                    <div class="order-actions">
+                                        <a href="{% url 'order_detail' order.order_number %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                                        {% if order.status == 'PENDING' or order.status == 'PROCESSING' %}
+                                            <form method="post" action="{% url 'cancel_order' order.order_number %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger ms-2" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Pagination -->
+                        {% if orders.paginator.num_pages > 1 %}
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination pagination-custom justify-content-center">
+                                {% if orders.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Previous">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for i in orders.paginator.page_range %}
+                                {% if i == orders.number %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > orders.number|add:"-3" and i < orders.number|add:"3" %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if orders.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Next">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <h3 class="mb-3">No orders found</h3>
+                            {% if request.GET.status or request.GET.search %}
+                                <p>No orders match your search criteria. Try different filters or search terms.</p>
+                                <a href="{% url 'order_history' %}" class="btn btn-outline-primary">View All Orders</a>
+                            {% else %}
+                                <p>You haven't placed any orders yet.</p>
+                                <a href="{% url 'product_list' %}" class="btn btn-primary">Start Shopping</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

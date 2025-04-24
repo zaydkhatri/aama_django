@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Addresses | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Manage Addresses</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Addresses</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Addresses Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link active">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Addresses Content -->
+            <div class="col-lg-9">
+                <div class="account-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="account-card-title mb-0">Your Addresses</h3>
+                        <a href="{% url 'add_address' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Add New Address
+                        </a>
+                    </div>
+                    
+                    {% if addresses %}
+                        <div class="row">
+                            {% for address in addresses %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="address-card h-100">
+                                        <span class="address-type">{{ address.get_address_type_display }}</span>
+                                        {% if address.is_default %}
+                                        <span class="badge bg-primary position-absolute" style="top: 20px; left: 20px;">Default</span>
+                                        {% endif %}
+                                        
+                                        <h5 class="address-name">{{ user.name }}</h5>
+                                        <div class="address-details">
+                                            {{ address.address_line1 }}<br>
+                                            {% if address.address_line2 %}{{ address.address_line2 }}<br>{% endif %}
+                                            {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                                            {{ address.country }}<br>
+                                            {% if address.phone_number %}Phone: {{ address.phone_number }}{% endif %}
+                                        </div>
+                                        
+                                        <div class="address-actions">
+                                            {% if not address.is_default %}
+                                                <form method="post" action="{% url 'set_default_address' address.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Set as Default</button>
+                                                </form>
+                                            {% endif %}
+                                            
+                                            <a href="{% url 'edit_address' address.id %}" class="btn btn-sm btn-outline-secondary ms-1">Edit</a>
+                                            
+                                            <form method="post" action="{% url 'delete_address' address.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('Are you sure you want to delete this address?')">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <h3 class="mb-3">No addresses found</h3>
+                            <p>You haven't added any addresses yet.</p>
+                            <a href="{% url 'add_address' %}" class="btn btn-primary mt-2">Add Your First Address</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

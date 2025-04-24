@@ -43,7 +43,7 @@ def register(request):
                 user.save()
                 
                 # Create notification preferences
-                NotificationPreference.objects.create(user=user)
+                NotificationPreference.objects.get_or_create(user=user)
                 
                 # Send verification email
                 send_verification_email(request, user)
@@ -303,7 +303,12 @@ def edit_address(request, uuid):
     else:
         form = AddressForm(instance=address)
     
-    return render(request, 'users/address_form.html', {'form': form, 'title': 'Edit Address'})
+    # Pass both form and address to the template
+    return render(request, 'users/address_form.html', {
+        'form': form, 
+        'address': address,  # This is the missing part
+        'title': 'Edit Address'
+    })
 
 @login_required
 def delete_address(request, uuid):

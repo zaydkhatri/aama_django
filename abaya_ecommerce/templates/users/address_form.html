@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if address %}Edit Address{% else %}Add New Address{% endif %} | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">{% if address %}Edit Address{% else %}Add New Address{% endif %}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'manage_addresses' %}">Addresses</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{% if address %}Edit{% else %}Add New{% endif %}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Address Form Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link active">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Address Form Content -->
+            <div class="col-lg-9">
+                <div class="account-card">
+                    <h3 class="account-card-title">{% if address %}Edit Address{% else %}Add New Address{% endif %}</h3>
+                    
+                    <form method="post" action="{% if address %}{% url 'edit_address' address.id %}{% else %}{% url 'add_address' %}{% endif %}" class="address-form">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Address Type</label>
+                                <div class="d-flex">
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input" type="radio" name="address_type" id="typeShipping" value="SHIPPING" {% if address.address_type == 'SHIPPING' %}checked{% elif not address %}checked{% endif %}>
+                                        <label class="form-check-label" for="typeShipping">Shipping</label>
+                                    </div>
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input" type="radio" name="address_type" id="typeBilling" value="BILLING" {% if address.address_type == 'BILLING' %}checked{% endif %}>
+                                        <label class="form-check-label" for="typeBilling">Billing</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="address_type" id="typeBoth" value="BOTH" {% if address.address_type == 'BOTH' %}checked{% endif %}>
+                                        <label class="form-check-label" for="typeBoth">Both</label>
+                                    </div>
+                                </div>
+                                {% if form.address_type.errors %}
+                                    <div class="text-danger">{{ form.address_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="addressLine1" class="form-label">Address Line 1 *</label>
+                                <input type="text" class="form-control {% if form.address_line1.errors %}is-invalid{% endif %}" id="addressLine1" name="address_line1" value="{% if address %}{{ address.address_line1 }}{% endif %}" required>
+                                {% if form.address_line1.errors %}
+                                    <div class="invalid-feedback">{{ form.address_line1.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="addressLine2" class="form-label">Address Line 2</label>
+                                <input type="text" class="form-control {% if form.address_line2.errors %}is-invalid{% endif %}" id="addressLine2" name="address_line2" value="{% if address %}{{ address.address_line2 }}{% endif %}">
+                                {% if form.address_line2.errors %}
+                                    <div class="invalid-feedback">{{ form.address_line2.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="city" class="form-label">City *</label>
+                                <input type="text" class="form-control {% if form.city.errors %}is-invalid{% endif %}" id="city" name="city" value="{% if address %}{{ address.city }}{% endif %}" required>
+                                {% if form.city.errors %}
+                                    <div class="invalid-feedback">{{ form.city.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="state" class="form-label">State/Province *</label>
+                                <input type="text" class="form-control {% if form.state.errors %}is-invalid{% endif %}" id="state" name="state" value="{% if address %}{{ address.state }}{% endif %}" required>
+                                {% if form.state.errors %}
+                                    <div class="invalid-feedback">{{ form.state.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="postalCode" class="form-label">Postal/ZIP Code *</label>
+                                <input type="text" class="form-control {% if form.postal_code.errors %}is-invalid{% endif %}" id="postalCode" name="postal_code" value="{% if address %}{{ address.postal_code }}{% endif %}" required>
+                                {% if form.postal_code.errors %}
+                                    <div class="invalid-feedback">{{ form.postal_code.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="country" class="form-label">Country *</label>
+                                <select class="form-select {% if form.country.errors %}is-invalid{% endif %}" id="country" name="country" required>
+                                    <option value="">Select Country</option>
+                                    <option value="india" {% if address.country == 'india' %}selected{% endif %}>India</option>
+                                    <option value="uae" {% if address.country == 'uae' %}selected{% endif %}>United Arab Emirates</option>
+                                    <option value="saudi_arabia" {% if address.country == 'saudi_arabia' %}selected{% endif %}>Saudi Arabia</option>
+                                    <option value="qatar" {% if address.country == 'qatar' %}selected{% endif %}>Qatar</option>
+                                    <option value="kuwait" {% if address.country == 'kuwait' %}selected{% endif %}>Kuwait</option>
+                                    <option value="oman" {% if address.country == 'oman' %}selected{% endif %}>Oman</option>
+                                    <option value="bahrain" {% if address.country == 'bahrain' %}selected{% endif %}>Bahrain</option>
+                                    <!-- Add more countries as needed -->
+                                </select>
+                                {% if form.country.errors %}
+                                    <div class="invalid-feedback">{{ form.country.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNumber" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control {% if form.phone_number.errors %}is-invalid{% endif %}" id="phoneNumber" name="phone_number" value="{% if address %}{{ address.phone_number }}{% endif %}" required>
+                                {% if form.phone_number.errors %}
+                                    <div class="invalid-feedback">{{ form.phone_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="alternatePhone" class="form-label">Alternate Phone</label>
+                                <input type="tel" class="form-control {% if form.alternate_phone.errors %}is-invalid{% endif %}" id="alternatePhone" name="alternate_phone" value="{% if address %}{{ address.alternate_phone }}{% endif %}">
+                                {% if form.alternate_phone.errors %}
+                                    <div class="invalid-feedback">{{ form.alternate_phone.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isDefault" name="is_default" {% if address.is_default %}checked{% endif %}>
+                                    <label class="form-check-label" for="isDefault">
+                                        Set as default address
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 d-flex">
+                                <button type="submit" class="btn btn-primary">
+                                    {% if address %}Update Address{% else %}Save Address{% endif %}
+                                </button>
+                                <a href="{% url 'manage_addresses' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Form validation
+        $('form').on('submit', function(e) {
+            var addressLine1 = $('#addressLine1').val().trim();
+            var city = $('#city').val().trim();
+            var state = $('#state').val().trim();
+            var postalCode = $('#postalCode').val().trim();
+            var country = $('#country').val();
+            var phoneNumber = $('#phoneNumber').val().trim();
+            
+            if (!addressLine1) {
+                alert('Please enter Address Line 1');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!city) {
+                alert('Please enter City');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!state) {
+                alert('Please enter State/Province');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!postalCode) {
+                alert('Please enter Postal/ZIP Code');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!country) {
+                alert('Please select Country');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!phoneNumber) {
+                alert('Please enter Phone Number');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Basic phone number validation
+            if (!/^\d{10,15}$/.test(phoneNumber.replace(/[\s\-\(\)]/g, ''))) {
+                alert('Please enter a valid phone number');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Validate alternate phone if provided
+            var alternatePhone = $('#alternatePhone').val().trim();
+            if (alternatePhone && !/^\d{10,15}$/.test(alternatePhone.replace(/[\s\-\(\)]/g, ''))) {
+                alert('Please enter a valid alternate phone number');
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

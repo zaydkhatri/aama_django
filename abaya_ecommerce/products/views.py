@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from .models import (
     Category, Product, Attribute, AttributeValue, ProductAttribute,
-    Currency, Review, ProductView, SearchQuery
+    Currency, Review, ProductView, SearchQuery, ReviewImage
 )
 from .forms import ReviewForm, ProductFilterForm
 
@@ -132,7 +132,7 @@ def product_detail(request, slug):
     
     # Get all attributes and their values for this product
     product_attributes = product.attributes.all().select_related('attribute', 'attribute_value')
-    
+    product.get_default_image = product.media.filter(is_default=True).first()
     # Group attributes by attribute name
     grouped_attributes = {}
     for pa in product_attributes:
@@ -177,13 +177,58 @@ def product_detail(request, slug):
         'form': form,
     })
 
+# def category_detail(request, slug):
+#     category = get_object_or_404(Category, slug=slug, is_active=True)
+#     products = category.get_all_products()
+    
+#     # Pagination
+#     paginator = Paginator(products, 12)  # Show 12 products per page
+#     page = request.GET.get('page')
+#     try:
+#         products = paginator.page(page)
+#     except PageNotAnInteger:
+#         products = paginator.page(1)
+#     except EmptyPage:
+#         products = paginator.page(paginator.num_pages)
+    
+#     return render(request, 'products/category_detail.html', {
+#         'category': category,
+#         'products': products,
+#     })
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
-    products = category.get_all_products()
+    products_list = category.get_all_products()
+    
+    # Set default image for each product
+    for product in products_list:
+        product.default_image = product.get_default_image()
+    
+    # Filtering
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    sort = request.GET.get('sort')
+    
+    if min_price:
+        products_list = products_list.filter(price__gte=min_price)
+    
+    if max_price:
+        products_list = products_list.filter(price__lte=max_price)
+    
+    # Sorting
+    if sort:
+        if sort == 'price_low':
+            products_list = products_list.order_by('price')
+        elif sort == 'price_high':
+            products_list = products_list.order_by('-price')
+        elif sort == 'newest':
+            products_list = products_list.order_by('-created_at')
+        elif sort == 'popularity':
+            products_list = products_list.annotate(view_count=Count('views')).order_by('-view_count')
     
     # Pagination
-    paginator = Paginator(products, 12)  # Show 12 products per page
+    paginator = Paginator(products_list, 12)  # Show 12 products per page
     page = request.GET.get('page')
+    
     try:
         products = paginator.page(page)
     except PageNotAnInteger:
@@ -191,9 +236,14 @@ def category_detail(request, slug):
     except EmptyPage:
         products = paginator.page(paginator.num_pages)
     
+    # Get all categories for sidebar
+    categories = Category.objects.filter(is_active=True)
+    
     return render(request, 'products/category_detail.html', {
         'category': category,
         'products': products,
+        'categories': categories,
+        'all_products_count': Product.objects.filter(is_active=True).count()
     })
 
 @login_required

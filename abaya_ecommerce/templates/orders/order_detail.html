@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order #{{ order.order_number }} | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Order Details</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'order_history' %}">Orders</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Order #{{ order.order_number }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Detail Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link active">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Order Detail Content -->
+            <div class="col-lg-9">
+                <!-- Order Overview -->
+                <div class="account-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="account-card-title mb-0">Order #{{ order.order_number }}</h3>
+                        <div class="order-status status-{{ order.status|lower }}">{{ order.get_status_display }}</div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <h5>Order Details</h5>
+                            <p>
+                                <strong>Order Date:</strong> {{ order.created_at|date:"F d, Y" }}<br>
+                                <strong>Payment Method:</strong> {{ order.get_payment_method_display }}<br>
+                                {% if order.tracking_number %}
+                                <strong>Tracking Number:</strong> {{ order.tracking_number }}<br>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <h5>Shipping Address</h5>
+                            <p>
+                                {{ order.shipping_name }}<br>
+                                {{ order.shipping_address_line1 }}<br>
+                                {% if order.shipping_address_line2 %}{{ order.shipping_address_line2 }}<br>{% endif %}
+                                {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}<br>
+                                {{ order.shipping_country }}<br>
+                                Phone: {{ order.shipping_phone }}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h5>Billing Address</h5>
+                            <p>
+                                {{ order.billing_name }}<br>
+                                {{ order.billing_address_line1 }}<br>
+                                {% if order.billing_address_line2 %}{{ order.billing_address_line2 }}<br>{% endif %}
+                                {{ order.billing_city }}, {{ order.billing_state }} {{ order.billing_postal_code }}<br>
+                                {{ order.billing_country }}<br>
+                                Phone: {{ order.billing_phone }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Timeline -->
+                    <div class="order-timeline mb-4">
+                        <h5 class="mb-3">Order Timeline</h5>
+                        <div class="position-relative">
+                            <!-- Vertical line -->
+                            <div class="position-absolute" style="top: 0; bottom: 0; left: 15px; width: 2px; background-color: var(--light-gray);"></div>
+                            
+                            {% for status in order_history %}
+                            <div class="d-flex mb-3">
+                                <div class="order-timeline-dot {% if forloop.first %}bg-primary{% else %}bg-light{% endif %}" style="width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; z-index: 1;">
+                                    <i class="fas {% if status.status == 'PENDING' %}fa-clock{% elif status.status == 'PROCESSING' %}fa-spinner{% elif status.status == 'SHIPPED' %}fa-truck{% elif status.status == 'DELIVERED' %}fa-check-circle{% elif status.status == 'CANCELLED' %}fa-times-circle{% endif %} {% if forloop.first %}text-white{% else %}text-gray{% endif %}"></i>
+                                </div>
+                                <div class="order-timeline-content ms-3">
+                                    <h6 class="mb-0">{{ status.get_status_display }}</h6>
+                                    <p class="text-muted mb-0">{{ status.timestamp|date:"F d, Y h:i A" }}</p>
+                                    {% if status.notes %}<p class="small mt-1">{{ status.notes }}</p>{% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Order Items -->
+                    <div class="order-items">
+                        <h5 class="mb-3">Order Items</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items.all %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="order-product-img me-3" style="width: 60px; height: 60px;">
+                                                    {% if item.product.default_image %}
+                                                    <img src="{{ item.product.default_image.url }}" alt="{{ item.product.name }}" class="img-fluid">
+                                                    {% else %}
+                                                    <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ item.product.name }}" class="img-fluid">
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">
+                                                        <a href="{% url 'product_detail' item.product.slug %}">{{ item.product.name }}</a>
+                                                    </h6>
+                                                    <small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>₹{{ item.price }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>₹{{ item.total }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                        <td>₹{{ order.subtotal }}</td>
+                                    </tr>
+                                    {% if order.discount_amount %}
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Discount:</strong></td>
+                                        <td class="text-success">-₹{{ order.discount_amount }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Shipping:</strong></td>
+                                        <td>₹{{ order.shipping_amount }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Tax:</strong></td>
+                                        <td>₹{{ order.tax_amount }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                        <td><strong>₹{{ order.total }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Actions -->
+                    <div class="order-actions mt-4">
+                        <a href="{% url 'order_history' %}" class="btn btn-outline-primary">Back to Orders</a>
+                        
+                        {% if order.status == 'DELIVERED' %}
+                        <a href="{% url 'leave_review' order.id %}" class="btn btn-primary ms-2">Leave Review</a>
+                        {% endif %}
+                        
+                        {% if order.status == 'PENDING' or order.status == 'PROCESSING' %}
+                        <form method="post" action="{% url 'cancel_order' order.order_number %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger ms-2" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'download_invoice' order.order_number %}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-download me-1"></i> Download Invoice
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Contact About Order -->
+                <div class="account-card">
+                    <h4 class="account-card-title">Need Help With Your Order?</h4>
+                    <p>If you have any questions or concerns about your order, please don't hesitate to contact our customer service team.</p>
+                    <div class="d-flex flex-wrap">
+                        <a href="{% url 'contact' %}" class="btn btn-outline-primary me-2 mb-2">Contact Us</a>
+                        <a href="#" class="btn btn-outline-primary me-2 mb-2">Request Return</a>
+                        <a href="#" class="btn btn-outline-primary mb-2">Track Shipment</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

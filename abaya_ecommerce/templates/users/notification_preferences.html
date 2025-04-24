@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notification Preferences | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Notification Preferences</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Notification Preferences</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Preferences Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link active">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Notification Preferences Content -->
+            <div class="col-lg-9">
+                <div class="account-card">
+                    <h3 class="account-card-title">Manage Your Notifications</h3>
+                    <p class="mb-4">Choose how you'd like to receive updates and information from us.</p>
+                    
+                    <form method="post" action="{% url 'notification_preferences' %}" class="notification-form">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Email Notifications -->
+                        <div class="notification-section mb-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-envelope text-primary me-2"></i> Email Notifications
+                            </h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.email_marketing }}
+                                        <label class="form-check-label" for="{{ form.email_marketing.id_for_label }}">
+                                            Marketing and Promotions
+                                        </label>
+                                        <div class="form-text">New collections, sales, and special offers</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.email_order_updates }}
+                                        <label class="form-check-label" for="{{ form.email_order_updates.id_for_label }}">
+                                            Order Updates
+                                        </label>
+                                        <div class="form-text">Shipping confirmations and delivery updates</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.email_returns }}
+                                        <label class="form-check-label" for="{{ form.email_returns.id_for_label }}">
+                                            Returns and Refunds
+                                        </label>
+                                        <div class="form-text">Updates about return requests and refunds</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.email_account }}
+                                        <label class="form-check-label" for="{{ form.email_account.id_for_label }}">
+                                            Account Activity
+                                        </label>
+                                        <div class="form-text">Password changes and login alerts</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SMS Notifications -->
+                        <div class="notification-section mb-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-mobile-alt text-primary me-2"></i> SMS Notifications
+                            </h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.sms_marketing }}
+                                        <label class="form-check-label" for="{{ form.sms_marketing.id_for_label }}">
+                                            Marketing and Promotions
+                                        </label>
+                                        <div class="form-text">New collections, sales, and special offers</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.sms_order_updates }}
+                                        <label class="form-check-label" for="{{ form.sms_order_updates.id_for_label }}">
+                                            Order Updates
+                                        </label>
+                                        <div class="form-text">Shipping confirmations and delivery updates</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.sms_returns }}
+                                        <label class="form-check-label" for="{{ form.sms_returns.id_for_label }}">
+                                            Returns and Refunds
+                                        </label>
+                                        <div class="form-text">Updates about return requests and refunds</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.sms_account }}
+                                        <label class="form-check-label" for="{{ form.sms_account.id_for_label }}">
+                                            Account Activity
+                                        </label>
+                                        <div class="form-text">Password changes and login alerts</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i> Standard messaging rates may apply. You can opt out at any time.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex">
+                            <button type="submit" class="btn btn-primary">Save Preferences</button>
+                            <a href="{% url 'account_dashboard' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Communication Policy -->
+                <div class="account-card mt-4">
+                    <h4 class="account-card-title">Our Communication Policy</h4>
+                    <div class="row">
+                        <div class="col-lg-6 mb-3 mb-lg-0">
+                            <h5>What We Send</h5>
+                            <ul>
+                                <li>Order confirmations and shipping updates</li>
+                                <li>Account security notifications</li>
+                                <li>Product recommendations based on your purchases</li>
+                                <li>Sale announcements and special offers</li>
+                                <li>New collection launches</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-6">
+                            <h5>Your Privacy Matters</h5>
+                            <ul>
+                                <li>We'll never sell or share your contact information</li>
+                                <li>You can change your preferences anytime</li>
+                                <li>We only send what you've opted in to receive</li>
+                                <li>Each email includes an unsubscribe link</li>
+                                <li>For more details, see our <a href="#">Privacy Policy</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom styling for the notification switches */
+    .form-switch .form-check-input {
+        width: 3em;
+        height: 1.5em;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .notification-section {
+        border-bottom: 1px solid var(--light-gray);
+        padding-bottom: 20px;
+    }
+    
+    .notification-section:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}

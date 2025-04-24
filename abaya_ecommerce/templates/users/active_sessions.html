@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Active Sessions | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Active Sessions</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Active Sessions</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Sessions Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link active">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Active Sessions Content -->
+            <div class="col-lg-9">
+                <div class="account-card">
+                    <h3 class="account-card-title">Your Active Sessions</h3>
+                    <p class="mb-4">These are the devices currently logged into your account. You can end any session that you don't recognize.</p>
+                    
+                    {% if sessions %}
+                        <div class="table-responsive mb-4">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Device</th>
+                                        <th>Location</th>
+                                        <th>Last Activity</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in sessions %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if 'Mobile' in session.user_agent %}
+                                                    <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+                                                    {% elif 'Tablet' in session.user_agent %}
+                                                    <i class="fas fa-tablet-alt fa-2x text-primary"></i>
+                                                    {% else %}
+                                                    <i class="fas fa-desktop fa-2x text-primary"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    {% if 'Mobile' in session.user_agent %}
+                                                    <strong>Mobile Device</strong>
+                                                    {% elif 'Tablet' in session.user_agent %}
+                                                    <strong>Tablet</strong>
+                                                    {% else %}
+                                                    <strong>Desktop</strong>
+                                                    {% endif %}
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        {% if 'Chrome' in session.user_agent %}
+                                                        Chrome Browser
+                                                        {% elif 'Firefox' in session.user_agent %}
+                                                        Firefox Browser
+                                                        {% elif 'Safari' in session.user_agent %}
+                                                        Safari Browser
+                                                        {% elif 'Edge' in session.user_agent %}
+                                                        Edge Browser
+                                                        {% else %}
+                                                        Unknown Browser
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                {% if session.ip_address %}
+                                                {{ session.ip_address }}
+                                                <br>
+                                                <small class="text-muted">
+                                                    {% if session.location %}
+                                                    {{ session.location }}
+                                                    {% else %}
+                                                    Location unknown
+                                                    {% endif %}
+                                                </small>
+                                                {% else %}
+                                                IP address unknown
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                {{ session.updated_at|date:"F d, Y" }}
+                                                <br>
+                                                <small class="text-muted">{{ session.updated_at|time:"h:i A" }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if session.is_current %}
+                                            <span class="badge bg-success">Current Session</span>
+                                            {% elif session.is_expired %}
+                                            <span class="badge bg-danger">Expired</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">Active</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="post" action="{% url 'end_session' session.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" {% if session.is_expired %}disabled{% endif %} onclick="return confirm('Are you sure you want to end this session?')">
+                                                    End Session
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="text-end">
+                            <form method="post" action="{% url 'end_all_sessions' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to end all sessions? This will log you out from all devices.')">
+                                    End All Sessions
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="mb-3">No active sessions found</h3>
+                            <p>There are no other active sessions besides your current one.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Security Tips -->
+                <div class="account-card mt-4">
+                    <h4 class="account-card-title">Security Tips</h4>
+                    <div class="row">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="fas fa-fingerprint fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Use Strong Passwords</h5>
+                                    <p class="small">Always use strong, unique passwords for each of your accounts.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="fas fa-sign-out-alt fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Log Out on Public Devices</h5>
+                                    <p class="small">Always log out of your account when using shared or public devices.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="fas fa-bell fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Check Regularly</h5>
+                                    <p class="small">Regularly review your active sessions and end any suspicious activity.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

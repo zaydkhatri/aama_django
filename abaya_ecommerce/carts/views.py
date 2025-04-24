@@ -289,3 +289,54 @@ def move_to_cart(request):
         'cart_count': cart.get_item_count(),
         'wishlist_count': wishlist.get_item_count()
     })
+
+@login_required
+@require_POST
+def add_all_to_cart(request):
+    """Add all wishlist items to cart."""
+    wishlist = get_object_or_404(Wishlist, user=request.user)
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    
+    if not wishlist.items.exists():
+        return JsonResponse({
+            'status': 'info',
+            'message': 'Your wishlist is empty'
+        })
+    
+    count = 0
+    for wishlist_item in wishlist.items.all():
+        # Check stock first
+        if wishlist_item.product.quantity < 1:
+            continue
+            
+        try:
+            # Try to find existing cart item
+            cart_item = CartItem.objects.get(cart=cart, product=wishlist_item.product)
+            # Update quantity
+            cart_item.quantity += 1
+            cart_item.save()
+        except CartItem.DoesNotExist:
+            # Create new cart item
+            CartItem.objects.create(
+                cart=cart,
+                product=wishlist_item.product,
+                quantity=1
+            )
+        count += 1
+    
+    if count > 0:
+        messages.success(request, f"{count} items added to your cart")
+    else:
+        messages.info(request, "No items were added to your cart")
+    
+    return redirect('cart_detail')
+
+@login_required
+@require_POST
+def clear_wishlist(request):
+    """Clear all items from wishlist."""
+    wishlist = get_object_or_404(Wishlist, user=request.user)
+    wishlist.items.all().delete()
+    
+    messages.success(request, "Your wishlist has been cleared")
+    return redirect('wishlist_detail')

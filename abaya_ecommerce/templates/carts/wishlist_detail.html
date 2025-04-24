@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">My Wishlist</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Wishlist</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wishlist Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Account Sidebar -->
+            <div class="col-lg-3">
+                <div class="account-sidebar">
+                    <div class="account-user">
+                        <div class="account-avatar">
+                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
+                        </div>
+                        <h4 class="account-username">{{ user.name }}</h4>
+                        <div class="account-email">{{ user.email }}</div>
+                    </div>
+                    
+                    <ul class="account-nav">
+                        <li class="account-nav-item">
+                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'order_history' %}" class="account-nav-link">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
+                                <i class="fas fa-map-marker-alt"></i> Addresses
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'profile_update' %}" class="account-nav-link">
+                                <i class="fas fa-user-edit"></i> Account Details
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link active">
+                                <i class="fas fa-heart"></i> Wishlist
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
+                                <i class="fas fa-shield-alt"></i> Active Sessions
+                            </a>
+                        </li>
+                        <li class="account-nav-item">
+                            <a href="{% url 'logout' %}" class="account-nav-link">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Wishlist Content -->
+            <div class="col-lg-9">
+                <div class="account-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="account-card-title mb-0">Saved Items</h3>
+                        {% if wishlist and wishlist.items.count > 0 %}
+                        <a href="{% url 'product_list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-shopping-bag me-1"></i> Continue Shopping
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if wishlist and wishlist.items.count > 0 %}
+                        <div class="row">
+                            {% for item in wishlist.items.all %}
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="product-card h-100">
+                                        <div class="product-image">
+                                            {% if item.product.is_in_stock %}
+                                            {% if item.product.sale_price %}
+                                            <div class="product-badges">
+                                                <span class="product-badge badge-sale">
+                                                    -{{ item.product.get_discount_percentage }}%
+                                                </span>
+                                            </div>
+                                            {% endif %}
+                                            {% else %}
+                                            <div class="product-badges">
+                                                <span class="product-badge badge-out">Out of Stock</span>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <div class="product-actions">
+                                                <form method="post" action="{% url 'remove_from_wishlist' %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                                    <button type="submit" class="action-btn" data-bs-toggle="tooltip" title="Remove from Wishlist">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                                <a href="{% url 'product_detail' item.product.slug %}" class="action-btn" data-bs-toggle="tooltip" title="View Details">
+                                                    <i class="far fa-eye"></i>
+                                                </a>
+                                            </div>
+                                            
+                                            {% if item.product.default_image %}
+                                            <img src="{{ item.product.default_image.url }}" alt="{{ item.product.name }}">
+                                            {% else %}
+                                            <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ item.product.name }}">
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="product-body">
+                                            <div class="product-category">
+                                                {% for category in item.product.categories.all|slice:":1" %}
+                                                {{ category.name }}
+                                                {% endfor %}
+                                            </div>
+                                            <h3 class="product-title">
+                                                <a href="{% url 'product_detail' item.product.slug %}">{{ item.product.name }}</a>
+                                            </h3>
+                                            <div class="product-price">
+                                                <span class="current-price">₹{{ item.product.get_active_price }}</span>
+                                                {% if item.product.sale_price %}
+                                                <span class="old-price">₹{{ item.product.price }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="product-rating">
+                                                {% with rating=item.product.get_rating %}
+                                                {% for i in "12345" %}
+                                                {% if forloop.counter <= rating|floatformat:"0" %}
+                                                <i class="fas fa-star"></i>
+                                                {% elif forloop.counter <= rating|add:"0.5"|floatformat:"0" %}
+                                                <i class="fas fa-star-half-alt"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                                {% endfor %}
+                                                <span class="count">({{ item.product.get_review_count }})</span>
+                                                {% endwith %}
+                                            </div>
+                                            
+                                            <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn btn-primary add-to-cart" {% if not item.product.is_in_stock %}disabled{% endif %}>
+                                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if wishlist.items.count > 12 %}
+                        <!-- Pagination -->
+                        <nav aria-label="Wishlist pagination" class="mt-4">
+                            <ul class="pagination pagination-custom justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        {% endif %}
+                        
+                        <!-- Batch Actions -->
+                        <div class="text-center mt-4">
+                            <form method="post" action="{% url 'add_all_to_cart' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-shopping-cart me-1"></i> Add All to Cart
+                                </button>
+                            </form>
+                            
+                            <form method="post" action="{% url 'clear_wishlist' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger ms-2" onclick="return confirm('Are you sure you want to remove all items from your wishlist?')">
+                                    <i class="fas fa-trash-alt me-1"></i> Clear Wishlist
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="far fa-heart"></i>
+                            </div>
+                            <h3 class="mb-3">Your wishlist is empty</h3>
+                            <p class="mb-4">Browse our collections and add your favorite items to your wishlist.</p>
+                            <a href="{% url 'product_list' %}" class="btn btn-primary">Shop Now</a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if recommended_products %}
+                <!-- Recommended Products -->
+                <div class="account-card mt-4">
+                    <h4 class="account-card-title">You Might Also Like</h4>
+                    
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper">
+                            {% for product in recommended_products %}
+                            <div class="swiper-slide">
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        {% if product.is_in_stock %}
+                                        {% if product.sale_price %}
+                                        <div class="product-badges">
+                                            <span class="product-badge badge-sale">
+                                                -{{ product.get_discount_percentage }}%
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                        {% else %}
+                                        <div class="product-badges">
+                                            <span class="product-badge badge-out">Out of Stock</span>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="product-actions">
+                                            <a href="#" class="action-btn add-to-wishlist" data-url="{% url 'add_to_wishlist' %}" data-product-id="{{ product.id }}" data-bs-toggle="tooltip" title="Add to Wishlist">
+                                                <i class="far fa-heart"></i>
+                                            </a>
+                                            <a href="{% url 'product_detail' product.slug %}" class="action-btn" data-bs-toggle="tooltip" title="Quick View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                        </div>
+                                        
+                                        {% if product.default_image %}
+                                        <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
+                                        {% else %}
+                                        <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="product-body">
+                                        <div class="product-category">
+                                            {% for category in product.categories.all|slice:":1" %}
+                                            {{ category.name }}
+                                            {% endfor %}
+                                        </div>
+                                        <h3 class="product-title">
+                                            <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+                                        </h3>
+                                        <div class="product-price">
+                                            <span class="current-price">₹{{ product.get_active_price }}</span>
+                                            {% if product.sale_price %}
+                                            <span class="old-price">₹{{ product.price }}</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
+                                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="swiper-pagination"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize product slider
+        if ($('.product-slider').length) {
+            new Swiper('.product-slider', {
+                slidesPerView: 1,
+                spaceBetween: 10,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                breakpoints: {
+                    640: {
+                        slidesPerView: 2,
+                        spaceBetween: 20,
+                    },
+                    768: {
+                        slidesPerView: 3,
+                        spaceBetween: 20,
+                    },
+                    1024: {
+                        slidesPerView: 3,
+                        spaceBetween: 30,
+                    },
+                },
+            });
+        }
+        
+        // AJAX Add to Cart
+        $('.add-to-cart-form').on('submit', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var url = form.attr('action');
+            var btn = form.find('button[type="submit"]');
+            var btnText = btn.html();
+
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+            btn.prop('disabled', true);
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: form.serialize(),
+                success: function(data) {
+                    if (data.status === 'success') {
+                        // Update cart count
+                        $('.header-icon .badge').text(data.cart_count);
+
+                        // Show success message
+                        showNotification(data.message, 'success');
+
+                        // Reset button
+                        btn.html(btnText);
+                        btn.prop('disabled', false);
+                    } else {
+                        // Show error message
+                        showNotification(data.message, 'danger');
+
+                        // Reset button
+                        btn.html(btnText);
+                        btn.prop('disabled', false);
+                    }
+                },
+                error: function() {
+                    // Show error message
+                    showNotification('An error occurred. Please try again.', 'danger');
+
+                    // Reset button
+                    btn.html(btnText);
+                    btn.prop('disabled', false);
+                }
+            });
+        });
+        
+        // Show notification toast
+        function showNotification(message, type) {
+            var toast = $('<div class="toast align-items-center text-white bg-' + type + ' border-0" role="alert" aria-live="assertive" aria-atomic="true">');
+            toast.html('<div class="d-flex"><div class="toast-body">' + message + '</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>');
+
+            $('.toast-container').append(toast);
+
+            var toastElement = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000
+            });
+
+            toastElement.show();
+
+            // Remove toast after hidden
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+    });
+</script>
+{% endblock %}

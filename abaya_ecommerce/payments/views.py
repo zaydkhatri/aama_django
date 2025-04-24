@@ -43,6 +43,54 @@ def payment_methods(request):
     })
 
 @login_required
+def add_payment_method(request):
+    if request.method == 'POST':
+        form = PaymentMethodForm(request.POST)
+        if form.is_valid():
+            payment_method = form.save(commit=False)
+            payment_method.user = request.user
+            
+            # Set as default if requested or if it's the first payment method
+            if form.cleaned_data.get('is_default') or not PaymentMethod.objects.filter(user=request.user).exists():
+                # Set all other payment methods as non-default
+                PaymentMethod.objects.filter(user=request.user).update(is_default=False)
+                payment_method.is_default = True
+                
+            payment_method.save()
+            messages.success(request, 'Payment method added successfully.')
+            return redirect('payment_methods')
+    else:
+        form = PaymentMethodForm()
+    
+    return render(request, 'payments/payment_method_form.html', {
+        'form': form
+    })
+
+@login_required
+def edit_payment_method(request, uuid):
+    payment_method = get_object_or_404(PaymentMethod, id=uuid, user=request.user)
+    
+    if request.method == 'POST':
+        form = PaymentMethodForm(request.POST, instance=payment_method)
+        if form.is_valid():
+            # If setting as default, update other payment methods
+            if form.cleaned_data.get('is_default') and not payment_method.is_default:
+                PaymentMethod.objects.filter(user=request.user).update(is_default=False)
+                payment_method.is_default = True
+            
+            form.save()
+            messages.success(request, 'Payment method updated successfully.')
+            return redirect('payment_methods')
+    else:
+        form = PaymentMethodForm(instance=payment_method)
+    
+    return render(request, 'payments/payment_method_form.html', {
+        'form': form,
+        'payment_method': payment_method
+    })
+
+
+@login_required
 def delete_payment_method(request, uuid):
     """Delete a payment method."""
     method = get_object_or_404(PaymentMethod, id=uuid, user=request.user)
