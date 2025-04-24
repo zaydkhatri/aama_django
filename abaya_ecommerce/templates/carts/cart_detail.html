@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Shopping Cart | Abaya Elegance{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Shopping Cart</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            {% if cart.items.count > 0 %}
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <div class="cart-table">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart.items.all %}
+                                <tr class="cart-item">
+                                    <td>
+                                        <div class="cart-product">
+                                            <div class="cart-product-img">
+                                                {% if item.product.media.filter(is_default=True).first %}
+                                                <img src="{{ item.product.media.filter(is_default=True).first.url }}" alt="{{ item.product.name }}">
+                                                {% else %}
+                                                <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ item.product.name }}">
+                                                {% endif %}
+                                            </div>
+                                            <div class="cart-product-content">
+                                                <h5 class="cart-product-name">
+                                                    <a href="{% url 'product_detail' item.product.slug %}">{{ item.product.name }}</a>
+                                                </h5>
+                                                <div class="cart-product-info">
+                                                    {% for category in item.product.categories.all|slice:":1" %}
+                                                    <span>{{ category.name }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>₹{{ item.product.get_active_price }}</td>
+                                    <td>
+                                        <form action="{% url 'update_cart' %}" method="post" class="cart-update-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                                            <div class="quantity-input cart-quantity">
+                                                <button type="button" class="quantity-btn minus">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.quantity }}" readonly>
+                                                <button type="button" class="quantity-btn plus">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td class="cart-item-total-{{ item.id }}">₹{{ item.get_total_price }}</td>
+                                    <td>
+                                        <form action="{% url 'remove_from_cart' %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                                            <button type="submit" class="cart-remove">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="cart-actions">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <form id="coupon-form" action="{% url 'apply_coupon' %}" method="post">
+                                {% csrf_token %}
+                                <div class="coupon-form">
+                                    <input type="text" name="code" class="form-control" placeholder="Coupon code" required>
+                                    <button type="submit" class="btn btn-primary">Apply</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <form action="{% url 'clear_cart' %}" method="post" class="d-inline-block">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger">Clear Cart</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="cart-summary">
+                    <h3 class="summary-title">Cart Summary</h3>
+                    
+                    <div class="summary-item">
+                        <div class="summary-key">Subtotal</div>
+                        <div class="summary-value cart-subtotal">₹{{ cart.get_total_price }}</div>
+                    </div>
+                    
+                    {% if discount_amount %}
+                    <div class="summary-item text-success">
+                        <div class="summary-key">Discount</div>
+                        <div class="summary-value cart-discount">-₹{{ discount_amount }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="summary-item">
+                        <div class="summary-key">Shipping</div>
+                        <div class="summary-value cart-shipping">₹{{ shipping_estimate }}</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-key">Tax</div>
+                        <div class="summary-value cart-tax">₹{{ tax_estimate }}</div>
+                    </div>
+                    
+                    <div class="summary-item summary-total">
+                        <div class="summary-key">Total</div>
+                        <div class="summary-value cart-total fw-bold">₹{{ total_estimate }}</div>
+                    </div>
+                    
+                    <div class="cart-buttons mt-4">
+                        <a href="{% url 'product_list' %}" class="btn btn-outline-primary d-block d-md-inline-block mb-3 mb-md-0">Continue Shopping</a>
+                        <a href="{% url 'checkout' %}" class="btn btn-primary d-block d-md-inline-block">Proceed to Checkout</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <div class="display-1 text-muted mb-4">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h2 class="mb-4">Your cart is empty</h2>
+                    <p class="mb-4">Looks like you haven't added any products to your cart yet.</p>
+                    <a href="{% url 'product_list' %}" class="btn btn-primary">Shop Now</a>
+                    {% if wishlist_count > 0 %}
+                    <a href="{% url 'wishlist_detail' %}" class="btn btn-outline-primary ms-2">View Wishlist</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Related Products -->
+{% if cart.items.count > 0 %}
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="section-title">
+            <h2>You Might Also Like</h2>
+            <p>Recommended products based on your cart</p>
+        </div>
+        
+        <div class="swiper product-slider">
+            <div class="swiper-wrapper">
+                {% for product in related_products|default:'' %}
+                <div class="swiper-slide">
+                    <div class="product-card">
+                        <div class="product-image">
+                            {% if product.is_in_stock %}
+                            {% if product.sale_price %}
+                            <div class="product-badges">
+                                <span class="product-badge badge-sale">
+                                    -{{ product.get_discount_percentage }}%
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="product-badges">
+                                <span class="product-badge badge-out">Out of Stock</span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="product-actions">
+                                <a href="#" class="action-btn add-to-wishlist" data-url="{% url 'add_to_wishlist' %}" data-product-id="{{ product.id }}" data-bs-toggle="tooltip" title="Add to Wishlist">
+                                    <i class="far fa-heart"></i>
+                                </a>
+                                <a href="{% url 'product_detail' product.slug %}" class="action-btn" data-bs-toggle="tooltip" title="Quick View">
+                                    <i class="far fa-eye"></i>
+                                </a>
+                            </div>
+                            
+                            {% if product.media.filter(is_default=True).first %}
+                            <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}">
+                            {% else %}
+                            <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="product-body">
+                            <div class="product-category">
+                                {% for category in product.categories.all|slice:":1" %}
+                                {{ category.name }}
+                                {% endfor %}
+                            </div>
+                            <h3 class="product-title">
+                                <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+                            </h3>
+                            <div class="product-price">
+                                <span class="current-price">₹{{ product.get_active_price }}</span>
+                                {% if product.sale_price %}
+                                <span class="old-price">₹{{ product.price }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
+                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update quantity input when clicking plus/minus buttons
+    $('.quantity-btn').on('click', function() {
+        var $button = $(this);
+        var $input = $button.parent().find('input');
+        var oldValue = parseInt($input.val());
+        var newVal = 1;
+        
+        if ($button.hasClass('plus')) {
+            newVal = oldValue + 1;
+        } else {
+            if (oldValue > 1) {
+                newVal = oldValue - 1;
+            }
+        }
+        
+        $input.val(newVal);
+        // Submit the form to update the cart
+        $button.closest('form').submit();
+    });
+</script>
+{% endblock %}

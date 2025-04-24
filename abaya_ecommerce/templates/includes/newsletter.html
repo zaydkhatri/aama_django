@@ -1,0 +1,54 @@
+<section class="newsletter py-5">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="newsletter-title">Join Our Newsletter</h2>
+                <p class="mb-4">Subscribe to our newsletter and get 10% off your first purchase</p>
+                
+                <form action="{% url 'newsletter_signup' %}" method="POST" class="newsletter-form" id="newsletterForm">
+                    {% csrf_token %}
+                    <div class="position-relative">
+                        <input type="email" name="email" class="form-control" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </div>
+                    <div class="form-check mt-2 d-flex justify-content-center">
+                        <input class="form-check-input me-2" type="checkbox" value="" id="privacyCheck" required>
+                        <label class="form-check-label small" for="privacyCheck">
+                            I agree to the privacy policy
+                        </label>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#newsletterForm').submit(function(e) {
+            e.preventDefault();
+            
+            var form = $(this);
+            var url = form.attr('action');
+            
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: form.serialize(),
+                success: function(data) {
+                    if (data.success) {
+                        form.trigger('reset');
+                        alert(data.message);
+                    } else {
+                        alert('There was an error. Please try again.');
+                    }
+                },
+                error: function() {
+                    alert('There was an error. Please try again.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

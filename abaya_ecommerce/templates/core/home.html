@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+
+{% block title %}Abaya Elegance - Premium Islamic Clothing Store{% endblock %}
+
+{% block meta_description %}Discover our exquisite collection of modern and traditional abayas, hijabs, and modest fashion at Abaya Elegance. Premium quality, worldwide shipping.{% endblock %}
+
+{% block content %}
+<!-- Hero Slider -->
+<div class="hero-slider swiper">
+    <div class="swiper-wrapper">
+        <!-- Slide 1 -->
+        <div class="hero-slide swiper-slide" style="background-image: url('{{ STATIC_URL }}images/hero-1.jpg');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Elegant Abayas for Modern Women</h1>
+                    <p>Discover our new collection of beautifully designed abayas that combine tradition with contemporary style.</p>
+                    <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg">Shop Now</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 2 -->
+        <div class="hero-slide swiper-slide" style="background-image: url('{{ STATIC_URL }}images/hero-2.jpg');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Premium Hijabs & Scarves</h1>
+                    <p>Elevate your modest wardrobe with our premium quality hijabs and scarves in a variety of colors and fabrics.</p>
+                    <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg">Explore Collection</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3 -->
+        <div class="hero-slide swiper-slide" style="background-image: url('{{ STATIC_URL }}images/hero-3.jpg');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Modest Fashion for All Occasions</h1>
+                    <p>From everyday wear to special occasions, find the perfect modest outfit for every moment in your life.</p>
+                    <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg">View Collection</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="swiper-pagination"></div>
+    
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+</div>
+
+<!-- Features Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Feature 1 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <h3 class="feature-title">Free Shipping</h3>
+                    <p class="feature-text">Free shipping on all orders over ₹2000</p>
+                </div>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="fas fa-undo"></i>
+                    </div>
+                    <h3 class="feature-title">Easy Returns</h3>
+                    <p class="feature-text">30 days easy return policy</p>
+                </div>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Secure Payment</h3>
+                    <p class="feature-text">100% secure payment methods</p>
+                </div>
+            </div>
+            
+            <!-- Feature 4 -->
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3 class="feature-title">24/7 Support</h3>
+                    <p class="feature-text">Dedicated customer support</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Categories -->
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="section-title">
+            <h2>Featured Categories</h2>
+            <p>Explore our most popular collections</p>
+        </div>
+        
+        <div class="row">
+            {% for category in top_categories %}
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    {% if category.image %}
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}">
+                    {% else %}
+                    <img src="{{ STATIC_URL }}images/category-placeholder.jpg" alt="{{ category.name }}">
+                    {% endif %}
+                    <div class="category-content">
+                        <h3 class="category-title">{{ category.name }}</h3>
+                        <div class="category-count">{{ category.get_all_products.count }} Products</div>
+                    </div>
+                    <a href="{% url 'category_detail' category.slug %}" class="stretched-link"></a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="section-padding">
+    <div class="container">
+        <div class="section-title">
+            <h2>Featured Products</h2>
+            <p>Our best selling premium abayas and modest fashion</p>
+        </div>
+        
+        <div class="row">
+            {% for product in featured_products %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="product-card">
+                    <div class="product-image">
+                        {% if product.is_in_stock %}
+                        {% if product.sale_price %}
+                        <div class="product-badges">
+                            <span class="product-badge badge-sale">
+                                -{{ product.get_discount_percentage }}%
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="product-badges">
+                            <span class="product-badge badge-out">Out of Stock</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="product-actions">
+                            <a href="#" class="action-btn add-to-wishlist" data-url="{% url 'add_to_wishlist' %}" data-product-id="{{ product.id }}" data-bs-toggle="tooltip" title="Add to Wishlist">
+                                <i class="far fa-heart"></i>
+                            </a>
+                            <a href="{% url 'product_detail' product.slug %}" class="action-btn" data-bs-toggle="tooltip" title="Quick View">
+                                <i class="far fa-eye"></i>
+                            </a>
+                        </div>
+                        
+                        {% if product.media.filter(is_default=True).first %}
+                        <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}">
+                        {% else %}
+                        <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-body">
+                        <div class="product-category">
+                            {% for category in product.categories.all|slice:":1" %}
+                            {{ category.name }}
+                            {% endfor %}
+                        </div>
+                        <h3 class="product-title">
+                            <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+                        </h3>
+                        <div class="product-price">
+                            <span class="current-price">₹{{ product.get_active_price }}</span>
+                            {% if product.sale_price %}
+                            <span class="old-price">₹{{ product.price }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-rating">
+                            {% with rating=product.get_rating %}
+                            {% for i in "12345" %}
+                            {% if forloop.counter <= rating|floatformat:"0" %}
+                            <i class="fas fa-star"></i>
+                            {% elif forloop.counter <= rating|add:"0.5"|floatformat:"0" %}
+                            <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                            <i class="far fa-star"></i>
+                            {% endif %}
+                            {% endfor %}
+                            <span class="count">({{ product.get_review_count }})</span>
+                            {% endwith %}
+                        </div>
+                        
+                        <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
+                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'product_list' %}" class="btn btn-outline-primary">View All Products</a>
+        </div>
+    </div>
+</section>
+
+<!-- New Arrivals -->
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="section-title">
+            <h2>New Arrivals</h2>
+            <p>Check out our latest additions to the collection</p>
+        </div>
+        
+        <div class="swiper product-slider">
+            <div class="swiper-wrapper">
+                {% for product in new_arrivals %}
+                <div class="swiper-slide">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <div class="product-badges">
+                                <span class="product-badge badge-new">New</span>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <a href="#" class="action-btn add-to-wishlist" data-url="{% url 'add_to_wishlist' %}" data-product-id="{{ product.id }}" data-bs-toggle="tooltip" title="Add to Wishlist">
+                                    <i class="far fa-heart"></i>
+                                </a>
+                                <a href="{% url 'product_detail' product.slug %}" class="action-btn" data-bs-toggle="tooltip" title="Quick View">
+                                    <i class="far fa-eye"></i>
+                                </a>
+                            </div>
+                            
+                            {% if product.media.filter(is_default=True).first %}
+                            <img src="{{ product.media.filter(is_default=True).first.url }}" alt="{{ product.name }}">
+                            {% else %}
+                            <img src="{{ STATIC_URL }}images/product-placeholder.jpg" alt="{{ product.name }}">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="product-body">
+                            <div class="product-category">
+                                {% for category in product.categories.all|slice:":1" %}
+                                {{ category.name }}
+                                {% endfor %}
+                            </div>
+                            <h3 class="product-title">
+                                <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+                            </h3>
+                            <div class="product-price">
+                                <span class="current-price">₹{{ product.get_active_price }}</span>
+                                {% if product.sale_price %}
+                                <span class="old-price">₹{{ product.price }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
+                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Promotional Banner -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="promo-banner" style="background-image: url('{{ STATIC_URL }}images/promo-1.jpg'); height: 400px; background-size: cover; background-position: center; border-radius: 10px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); padding: 40px; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="color: #fff; font-size: 28px; margin-bottom: 15px;">Summer Collection 2025</h3>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">Lightweight abayas perfect for the summer heat</p>
+                        <a href="{% url 'product_list' %}" class="btn btn-outline-light">Shop Now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="promo-banner" style="background-image: url('{{ STATIC_URL }}images/promo-2.jpg'); height: 400px; background-size: cover; background-position: center; border-radius: 10px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); padding: 40px; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="color: #fff; font-size: 28px; margin-bottom: 15px;">Premium Hijab Collection</h3>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">Luxurious fabrics for everyday elegance</p>
+                        <a href="{% url 'product_list' %}" class="btn btn-outline-light">Shop Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="section-title">
+            <h2>What Our Customers Say</h2>
+            <p>Read reviews from our satisfied customers</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <!-- Testimonial 1 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 p-4 border-0 shadow-sm">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="card-text mb-4">"The quality of the abaya I received is exceptional. The fabric is comfortable and the design is elegant. I've received many compliments!"</p>
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <span>SA</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Sarah A.</h5>
+                            <small class="text-muted">Mumbai, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 2 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 p-4 border-0 shadow-sm">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="card-text mb-4">"Fast shipping and excellent customer service. The hijabs are of premium quality and the colors are exactly as shown in the pictures. Will order again!"</p>
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <span>RK</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Rania K.</h5>
+                            <small class="text-muted">Delhi, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 3 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 p-4 border-0 shadow-sm">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <p class="card-text mb-4">"I love the modern designs that still maintain modesty. The sizing is perfect and the abayas are so comfortable for daily wear. This is now my go-to shop for modest fashion."</p>
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <span>FM</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Fatima M.</h5>
+                            <small class="text-muted">Hyderabad, India</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Instagram Feed -->
+<section class="section-padding">
+    <div class="container">
+        <div class="section-title">
+            <h2>Follow Us on Instagram</h2>
+            <p>@AbayaElegance</p>
+        </div>
+        
+        <div class="row g-2">
+            <!-- Instagram Images - These would typically come from an Instagram API feed -->
+            {% for i in "12345678" %}
+            <div class="col-lg-3 col-md-4 col-6">
+                <div class="position-relative instagram-item">
+                    <img src="{{ STATIC_URL }}images/instagram-{{ forloop.counter }}.jpg" alt="Instagram Post" class="img-fluid rounded">
+                    <a href="https://instagram.com" target="_blank" class="instagram-overlay">
+                        <div class="d-flex align-items-center justify-content-center h-100">
+                            <i class="fab fa-instagram text-white display-6"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .instagram-item {
+        overflow: hidden;
+    }
+    
+    .instagram-item img {
+        transition: all 0.3s ease;
+    }
+    
+    .instagram-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .instagram-item:hover img {
+        transform: scale(1.1);
+    }
+    
+    .instagram-item:hover .instagram-overlay {
+        opacity: 1;
+    }
+</style>
+{% endblock %}

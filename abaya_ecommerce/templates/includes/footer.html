@@ -1,0 +1,96 @@
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <!-- About Company -->
+            <div class="col-lg-3 col-md-6">
+                <div class="footer-widget footer-about">
+                    <h3 class="footer-title">About Us</h3>
+                    <p>Abaya Elegance is a premium online destination for modern and traditional Islamic clothing, featuring high-quality abayas, hijabs, and modest fashion.</p>
+                    <ul class="footer-social">
+                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div class="col-lg-3 col-md-6">
+                <div class="footer-widget">
+                    <h3 class="footer-title">Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'home' %}">Home</a></li>
+                        <li><a href="{% url 'product_list' %}">Shop</a></li>
+                        <li><a href="{% url 'about' %}">About Us</a></li>
+                        <li><a href="{% url 'contact' %}">Contact</a></li>
+                        <li><a href="{% url 'cart_detail' %}">Cart</a></li>
+                        <li><a href="{% url 'wishlist_detail' %}">Wishlist</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Help Information -->
+            <div class="col-lg-3 col-md-6">
+                <div class="footer-widget">
+                    <h3 class="footer-title">Help & Info</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Customer Service</a></li>
+                        <li><a href="#">Shipping & Returns</a></li>
+                        <li><a href="#">Size Guide</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="col-lg-3 col-md-6">
+                <div class="footer-widget">
+                    <h3 class="footer-title">Contact Us</h3>
+                    <div class="footer-contact-item">
+                        <div class="footer-contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="footer-contact-text">
+                            123 Fashion Street, Mumbai<br>Maharashtra, 400001, India
+                        </div>
+                    </div>
+                    <div class="footer-contact-item">
+                        <div class="footer-contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div class="footer-contact-text">
+                            +91 1234567890<br>+91 9876543210
+                        </div>
+                    </div>
+                    <div class="footer-contact-item">
+                        <div class="footer-contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="footer-contact-text">
+                            support@abayaelegance.com<br>info@abayaelegance.com
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Bottom - Copyright -->
+    <div class="footer-bottom">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; {% now "Y" %} Abaya Elegance. All Rights Reserved.</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="footer-payment text-md-end">
+                        <img src="{{ STATIC_URL }}images/payment-methods.png" alt="Payment Methods">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>

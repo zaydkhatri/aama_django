@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Us | Abaya Elegance{% endblock %}
+
+{% block meta_description %}Have questions or need assistance? Contact our customer support team. We're here to help with any inquiries about our products, orders, or services.{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Contact Us</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Contact</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Contact Information -->
+            <div class="col-lg-4 mb-5 mb-lg-0">
+                <div class="contact-info">
+                    <h3 class="mb-4">Get In Touch</h3>
+                    
+                    <div class="contact-info-item d-flex mb-4">
+                        <div class="contact-info-icon me-3">
+                            <i class="fas fa-map-marker-alt text-primary fa-2x"></i>
+                        </div>
+                        <div class="contact-info-content">
+                            <h5>Our Location</h5>
+                            <p>123 Fashion Street, Mumbai<br>Maharashtra, 400001, India</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info-item d-flex mb-4">
+                        <div class="contact-info-icon me-3">
+                            <i class="fas fa-phone-alt text-primary fa-2x"></i>
+                        </div>
+                        <div class="contact-info-content">
+                            <h5>Phone Number</h5>
+                            <p>+91 1234567890<br>+91 9876543210</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info-item d-flex mb-4">
+                        <div class="contact-info-icon me-3">
+                            <i class="fas fa-envelope text-primary fa-2x"></i>
+                        </div>
+                        <div class="contact-info-content">
+                            <h5>Email Address</h5>
+                            <p>support@abayaelegance.com<br>info@abayaelegance.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info-item d-flex">
+                        <div class="contact-info-icon me-3">
+                            <i class="fas fa-clock text-primary fa-2x"></i>
+                        </div>
+                        <div class="contact-info-content">
+                            <h5>Working Hours</h5>
+                            <p>Monday - Friday: 9:00 AM - 8:00 PM<br>Saturday - Sunday: 10:00 AM - 6:00 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+                        <h3 class="mb-4">Send Us A Message</h3>
+                        
+                        <form method="post" action="{% url 'contact' %}" class="form-custom">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Your Name <span class="text-danger">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Your Email <span class="text-danger">*</span></label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.email.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-12 mb-3">
+                                    <label for="{{ form.subject.id_for_label }}" class="form-label">Subject <span class="text-danger">*</span></label>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.subject.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-12 mb-4">
+                                    <label for="{{ form.message.id_for_label }}" class="form-label">Message <span class="text-danger">*</span></label>
+                                    {{ form.message }}
+                                    {% if form.message.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.message.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Send Message</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Google Map -->
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="map-container" style="height: 400px;">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d241317.11609823277!2d72.74109995709657!3d19.08219783958221!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c6306644edc1%3A0x5da4ed8f8d648c69!2sMumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1650721625403!5m2!1sen!2sin" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
