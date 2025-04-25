@@ -36,17 +36,17 @@
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <div class="product-gallery">
                     <div class="product-gallery-main">
-                        {% if product.default_media %}
-                        <img src="{{ product.default_media.url }}" alt="{{ product.name }}">
+                        {% if product.default_image  %}
+                        <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
                         {% else %}
                         <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}">
                         {% endif %}
                     </div>
                     
                     <div class="product-gallery-thumbs">
-                        {% for media in product.media.all %}
-                        <div class="product-gallery-thumb {% if media.is_default %}active{% endif %}" data-image="{{ media.url }}">
-                            <img src="{{ media.url }}" alt="{{ product.name }} - Image {{ forloop.counter }}">
+                        {% for image  in product.all_images %}
+                        <div class="product-gallery-thumb {% if image.is_default %}active{% endif %}" data-image="{{ media.url }}">
+                            <img src="{{ image.file.url }}" alt="{{ product.name }} - Image {{ forloop.counter }}">
                         </div>
                         {% endfor %}
                     </div>

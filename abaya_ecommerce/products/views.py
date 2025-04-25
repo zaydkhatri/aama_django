@@ -124,15 +124,79 @@ def product_list(request):
         'query': query,
     })
 
+# def product_detail(request, slug):
+#     product = get_object_or_404(Product, slug=slug, is_active=True)
+#     related_products = Product.objects.filter(
+#         categories__in=product.categories.all()
+#     ).exclude(id=product.id).distinct()[:4]
+    
+#     # Get all attributes and their values for this product
+#     product_attributes = product.attributes.all().select_related('attribute', 'attribute_value')
+#     product.get_default_image = product.media.filter(is_default=True).first()
+#     # Group attributes by attribute name
+#     grouped_attributes = {}
+#     for pa in product_attributes:
+#         attr_name = pa.attribute.name
+#         if attr_name not in grouped_attributes:
+#             grouped_attributes[attr_name] = []
+#         grouped_attributes[attr_name].append(pa.attribute_value)
+    
+#     # Get reviews
+#     reviews = product.reviews.filter(is_published=True).select_related('user').prefetch_related('images')
+    
+#     # Get review statistics
+#     review_stats = {
+#         'avg_rating': reviews.aggregate(Avg('rating'))['rating__avg'] or 0,
+#         'count': reviews.count(),
+#         'rating_5': reviews.filter(rating=5).count(),
+#         'rating_4': reviews.filter(rating=4).count(),
+#         'rating_3': reviews.filter(rating=3).count(),
+#         'rating_2': reviews.filter(rating=2).count(),
+#         'rating_1': reviews.filter(rating=1).count(),
+#     }
+    
+#     # Log product view
+#     ProductView.objects.create(
+#         product=product,
+#         user=request.user if request.user.is_authenticated else None,
+#         session_id=get_session_id(request),
+#         user_agent=request.META.get('HTTP_USER_AGENT', ''),
+#         ip_address=get_client_ip(request),
+#         device_type=request.META.get('HTTP_USER_AGENT', '').lower()
+#     )
+    
+#     # Review form
+#     form = ReviewForm()
+    
+#     return render(request, 'products/product_detail.html', {
+#         'product': product,
+#         'related_products': related_products,
+#         'grouped_attributes': grouped_attributes,
+#         'reviews': reviews,
+#         'review_stats': review_stats,
+#         'form': form,
+#     })
+
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
+    
     related_products = Product.objects.filter(
         categories__in=product.categories.all()
     ).exclude(id=product.id).distinct()[:4]
     
+    # Process related products to add default images
+    for related_product in related_products:
+        related_product.default_image = related_product.get_default_image()
+    
     # Get all attributes and their values for this product
     product_attributes = product.attributes.all().select_related('attribute', 'attribute_value')
-    product.get_default_image = product.media.filter(is_default=True).first()
+    
+    # Set the default image properly using the model's method
+    product.default_image = product.get_default_image()
+    
+    # Get all product images for gallery
+    product.all_images = product.media.filter(type='IMAGE').order_by('sort_order')
+    
     # Group attributes by attribute name
     grouped_attributes = {}
     for pa in product_attributes:
@@ -176,7 +240,6 @@ def product_detail(request, slug):
         'review_stats': review_stats,
         'form': form,
     })
-
 # def category_detail(request, slug):
 #     category = get_object_or_404(Category, slug=slug, is_active=True)
 #     products = category.get_all_products()

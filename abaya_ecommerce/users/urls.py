@@ -31,4 +31,6 @@ urlpatterns = [
     # Session management
     path('sessions/', views.active_sessions, name='active_sessions'),
     path('sessions/end/<uuid:uuid>/', views.end_session, name='end_session'),
+    # Add this line to your urlpatterns list
+    path('sessions/end-all/', views.end_all_sessions, name='end_all_sessions'),
 ]

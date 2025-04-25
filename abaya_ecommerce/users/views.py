@@ -365,6 +365,21 @@ def end_session(request, uuid):
     
     return redirect('active_sessions')
 
+@login_required
+def end_all_sessions(request):
+    if request.method == 'POST':
+        current_session_key = request.session.session_key
+        
+        # Delete all sessions except current
+        sessions = Session.objects.filter(user=request.user).exclude(token=current_session_key)
+        count = sessions.count()
+        sessions.delete()
+        
+        messages.success(request, f'{count} other sessions have been ended.')
+        return redirect('active_sessions')
+    
+    return redirect('active_sessions')
+
 # Helper functions
 def send_verification_email(request, user):
     current_site = get_current_site(request)
