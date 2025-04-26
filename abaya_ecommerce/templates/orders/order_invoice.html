@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Invoice #{{ order.order_number }} | Abaya Elegance{% endblock %}
+
+{% block meta_description %}Invoice for order #{{ order.order_number }} from Abaya Elegance.{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="breadcrumb-title">Invoice</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'order_detail' order.order_number %}">Order #{{ order.order_number }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Invoice</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoice Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm mb-4" id="invoice-content">
+                    <!-- Invoice Header -->
+                    <div class="card-body p-4 p-md-5">
+                        <div class="d-flex justify-content-between flex-wrap mb-5">
+                            <div class="company-info">
+                                <div class="company-logo mb-3">
+                                    <h1 class="h3">Abaya<span class="text-primary">Elegance</span></h1>
+                                </div>
+                                <p class="mb-1">123 Fashion Street, Mumbai</p>
+                                <p class="mb-1">Maharashtra, 400001, India</p>
+                                <p class="mb-1">Email: support@abayaelegance.com</p>
+                                <p class="mb-1">Phone: +91 1234567890</p>
+                                <p class="mb-1">GST: 27AABCU9603R1ZX</p>
+                            </div>
+                            
+                            <div class="invoice-details text-md-end">
+                                <h1 class="invoice-title h3 mb-3">INVOICE</h1>
+                                <p class="mb-1"><strong>Invoice Number:</strong> INV-{{ order.order_number }}</p>
+                                <p class="mb-1"><strong>Order Number:</strong> {{ order.order_number }}</p>
+                                <p class="mb-1"><strong>Date Issued:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+                                <p class="mb-1"><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+                                <p class="mb-1"><strong>Order Status:</strong> {{ order.get_status_display }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-5">
+                            <div class="col-md-6 mb-4 mb-md-0">
+                                <div class="billing-details">
+                                    <h4>Billed To:</h4>
+                                    <p class="mb-1">{{ order.user.name }}</p>
+                                    <p class="mb-1">{{ order.billing_address.address_line1 }}</p>
+                                    {% if order.billing_address.address_line2 %}
+                                    <p class="mb-1">{{ order.billing_address.address_line2 }}</p>
+                                    {% endif %}
+                                    <p class="mb-1">{{ order.billing_address.city }}, {{ order.billing_address.state }} {{ order.billing_address.postal_code }}</p>
+                                    <p class="mb-1">{{ order.billing_address.country }}</p>
+                                    <p class="mb-1">Phone: {{ order.billing_address.phone_number }}</p>
+                                    <p class="mb-1">Email: {{ order.user.email }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="shipping-details">
+                                    <h4>Shipped To:</h4>
+                                    <p class="mb-1">{{ order.user.name }}</p>
+                                    <p class="mb-1">{{ order.shipping_address.address_line1 }}</p>
+                                    {% if order.shipping_address.address_line2 %}
+                                    <p class="mb-1">{{ order.shipping_address.address_line2 }}</p>
+                                    {% endif %}
+                                    <p class="mb-1">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}</p>
+                                    <p class="mb-1">{{ order.shipping_address.country }}</p>
+                                    <p class="mb-1">Phone: {{ order.shipping_address.phone_number }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Table -->
+                        <div class="table-responsive mb-4">
+                            <table class="table table-striped mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th scope="col">Item</th>
+                                        <th scope="col">SKU</th>
+                                        <th scope="col" class="text-center">Quantity</th>
+                                        <th scope="col" class="text-end">Unit Price</th>
+                                        <th scope="col" class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items.all %}
+                                    <tr>
+                                        <td>
+                                            {{ item.product.name }}
+                                            {% if item.product.attributes.exists %}
+                                            <small class="d-block text-muted">
+                                                {% for attr in item.product.attributes.all %}
+                                                {{ attr.attribute.name }}: {{ attr.attribute_value.value }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.product.sku }}</td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-end">{{ item.price|currency }}</td>
+                                        <td class="text-end">{{ item.total|currency }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="text-end">Subtotal:</td>
+                                        <td class="text-end">{{ order.subtotal|currency }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end">Shipping:</td>
+                                        <td class="text-end">{{ order.shipping_amount|currency }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-end">Tax ({{ order.tax_amount|floatformat:2 }}%):</td>
+                                        <td class="text-end">{{ order.tax_amount|currency }}</td>
+                                    </tr>
+                                    {% if order.discount_amount > 0 %}
+                                    <tr>
+                                        <td colspan="4" class="text-end">Discount:</td>
+                                        <td class="text-end text-danger">-{{ order.discount_amount|currency }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="fw-bold">
+                                        <td colspan="4" class="text-end">Total:</td>
+                                        <td class="text-end">{{ order.total|currency }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <!-- Payment Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="payment-info mb-4">
+                                    <h4>Payment Information</h4>
+                                    <p class="mb-1"><strong>Payment Method:</strong> {{ order.payments.first.get_payment_method_display }}</p>
+                                    {% if order.payments.first.transaction_id %}
+                                    <p class="mb-1"><strong>Transaction ID:</strong> {{ order.payments.first.transaction_id }}</p>
+                                    {% endif %}
+                                    <p class="mb-1"><strong>Payment Date:</strong> {{ order.payments.first.created_at|date:"F j, Y" }}</p>
+                                </div>
+                                
+                                {% if order.notes %}
+                                <div class="order-notes mb-4">
+                                    <h4>Order Notes</h4>
+                                    <p>{{ order.notes }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="thank-you-note text-md-end">
+                                    <h4>Thank You for Your Purchase!</h4>
+                                    <p>We appreciate your business. If you have any questions about this invoice, please contact our customer service.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="terms-conditions mt-5 pt-4 border-top">
+                            <h5>Terms & Conditions</h5>
+                            <ul class="ps-3 mb-0">
+                                <li>All items sold are not returnable and non-refundable.</li>
+                                <li>Warranty as per the manufacturer's terms and conditions.</li>
+                                <li>For returns, please check our return policy on our website.</li>
+                                <li>This is a computer-generated invoice and does not require a physical signature.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Invoice Actions -->
+                <div class="d-flex justify-content-between mb-5">
+                    <a href="{% url 'order_detail' order.order_number %}" class="btn btn-outline-primary">Back to Order</a>
+                    
+                    <div class="d-flex gap-2">
+                        <button id="print-invoice" class="btn btn-primary">
+                            <i class="fas fa-print me-2"></i>Print Invoice
+                        </button>
+                        <button id="download-pdf" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Invoice Specific Styles */
+    #invoice-content {
+        background-color: white;
+    }
+    
+    .invoice-title {
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+    
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        
+        #invoice-content, #invoice-content * {
+            visibility: visible;
+        }
+        
+        #invoice-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-shadow: none !important;
+        }
+        
+        .card {
+            border: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Print Invoice
+        document.getElementById('print-invoice').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Download PDF
+        document.getElementById('download-pdf').addEventListener('click', function() {
+            const element = document.getElementById('invoice-content');
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: 'invoice-{{ order.order_number }}.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // New Promise-based usage:
+            html2pdf().set(opt).from(element).save();
+        });
+    });
+</script>
+{% endblock %}

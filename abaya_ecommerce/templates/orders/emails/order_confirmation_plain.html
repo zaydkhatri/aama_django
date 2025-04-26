@@ -1,0 +1,51 @@
+Thank You for Your Order!
+
+Dear {{ user.name }},
+
+We're thrilled to confirm your order has been received and is now being processed. Here are your order details:
+
+ORDER INFORMATION
+----------------
+Order Number: {{ order.order_number }}
+Order Date: {{ order.created_at|date:"F j, Y" }}
+Payment Method: {{ order.payments.first.get_payment_method_display }}
+Payment Status: {{ order.get_payment_status_display }}
+
+SHIPPING ADDRESS
+---------------
+{{ order.shipping_address.address_line1 }}
+{% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}{% endif %}
+{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}
+{{ order.shipping_address.country }}
+
+BILLING ADDRESS
+--------------
+{{ order.billing_address.address_line1 }}
+{% if order.billing_address.address_line2 %}{{ order.billing_address.address_line2 }}{% endif %}
+{{ order.billing_address.city }}, {{ order.billing_address.state }} {{ order.billing_address.postal_code }}
+{{ order.billing_address.country }}
+
+ORDER SUMMARY
+------------
+{% for item in order.items.all %}
+{{ item.product.name }} x {{ item.quantity }} - {{ order.currency.symbol }}{{ item.total }}
+{% endfor %}
+
+Subtotal: {{ order.currency.symbol }}{{ order.subtotal }}
+Shipping: {{ order.currency.symbol }}{{ order.shipping_amount }}
+Tax: {{ order.currency.symbol }}{{ order.tax_amount }}
+{% if order.discount_amount > 0 %}Discount: -{{ order.currency.symbol }}{{ order.discount_amount }}{% endif %}
+Total: {{ order.currency.symbol }}{{ order.total }}
+
+You can view your order details at: {{ site_url }}{% url 'order_detail' order.order_number %}
+
+We'll notify you when your order has been shipped. If you have any questions or need assistance with your order, please don't hesitate to contact our customer service team at support@abayaelegance.com.
+
+Thank you for shopping with Abaya Elegance!
+
+Warm regards,
+The Abaya Elegance Team
+
+-------------------
+© {% now "Y" %} Abaya Elegance. All rights reserved.
+123 Fashion Street, Mumbai, Maharashtra, 400001, India

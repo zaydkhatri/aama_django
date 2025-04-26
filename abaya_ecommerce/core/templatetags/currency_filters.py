@@ -1,3 +1,5 @@
+# Update core/templatetags/currency_filters.py with this implementation
+
 from django import template
 from core.currency_utils import convert_price, format_price
 from django.core.cache import cache
@@ -15,7 +17,11 @@ def convert_currency_filter(price, to_currency=None):
     
     # If no currency specified, use the selected currency from context
     if not to_currency:
-        to_currency = cache.get('selected_currency')
+        from core.middleware import get_current_request
+        request = get_current_request()
+        if request:
+            from core.currency_utils import get_selected_currency
+            to_currency = get_selected_currency(request)
     
     # Get the default currency (prices are stored in this currency)
     from products.models import Currency
@@ -39,7 +45,11 @@ def format_currency_filter(price, currency=None):
     
     # If no currency specified, use the selected currency from context
     if not currency:
-        currency = cache.get('selected_currency')
+        from core.middleware import get_current_request
+        request = get_current_request()
+        if request:
+            from core.currency_utils import get_selected_currency
+            currency = get_selected_currency(request)
     
     return format_price(price, currency)
 
@@ -54,7 +64,11 @@ def currency_filter(price, currency=None):
     
     # If no currency specified, use the selected currency from context
     if not currency:
-        currency = cache.get('selected_currency')
+        from core.middleware import get_current_request
+        request = get_current_request()
+        if request:
+            from core.currency_utils import get_selected_currency
+            currency = get_selected_currency(request)
     
     # Get the default currency (prices are stored in this currency)
     from products.models import Currency

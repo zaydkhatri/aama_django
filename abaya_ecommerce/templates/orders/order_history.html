@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load currency_filters %}
+{% load custom_tags %}
 
-{% block title %}Order History | Abaya Elegance{% endblock %}
+{% block title %}My Orders | Abaya Elegance{% endblock %}
+
+{% block meta_description %}View your order history and track the status of your purchases from Abaya Elegance.{% endblock %}
 
 {% block content %}
 <!-- Breadcrumb -->
@@ -14,7 +18,7 @@
                     <ol class="breadcrumb justify-content-center">
                         <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'account_dashboard' %}">My Account</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Orders</li>
+                        <li class="breadcrumb-item active" aria-current="page">My Orders</li>
                     </ol>
                 </nav>
             </div>
@@ -22,201 +26,286 @@
     </div>
 </div>
 
-<!-- Orders Section -->
+<!-- Order History Section -->
 <section class="section-padding">
     <div class="container">
         <div class="row">
-            <!-- Account Sidebar -->
-            <div class="col-lg-3">
-                <div class="account-sidebar">
-                    <div class="account-user">
-                        <div class="account-avatar">
-                            <img src="{{ STATIC_URL }}images/user-placeholder.jpg" alt="{{ user.name }}">
-                        </div>
-                        <h4 class="account-username">{{ user.name }}</h4>
-                        <div class="account-email">{{ user.email }}</div>
+            <!-- Sidebar -->
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="mb-4">My Account</h5>
+                        <ul class="nav flex-column account-nav">
+                            <li class="nav-item">
+                                <a href="{% url 'account_dashboard' %}" class="nav-link">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'order_history' %}" class="nav-link active">
+                                    <i class="fas fa-shopping-bag me-2"></i> My Orders
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'wishlist_detail' %}" class="nav-link">
+                                    <i class="far fa-heart me-2"></i> My Wishlist
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'manage_addresses' %}" class="nav-link">
+                                    <i class="fas fa-map-marker-alt me-2"></i> My Addresses
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'payment_methods' %}" class="nav-link">
+                                    <i class="far fa-credit-card me-2"></i> Payment Methods
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'profile_update' %}" class="nav-link">
+                                    <i class="fas fa-user-edit me-2"></i> Account Details
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'return_history' %}" class="nav-link">
+                                    <i class="fas fa-undo-alt me-2"></i> My Returns
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'logout' %}" class="nav-link text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                    
-                    <ul class="account-nav">
-                        <li class="account-nav-item">
-                            <a href="{% url 'account_dashboard' %}" class="account-nav-link">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'order_history' %}" class="account-nav-link active">
-                                <i class="fas fa-shopping-bag"></i> Orders
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'manage_addresses' %}" class="account-nav-link">
-                                <i class="fas fa-map-marker-alt"></i> Addresses
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'payment_methods' %}" class="account-nav-link">
-                                <i class="fas fa-credit-card"></i> Payment Methods
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'profile_update' %}" class="account-nav-link">
-                                <i class="fas fa-user-edit"></i> Account Details
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'notification_preferences' %}" class="account-nav-link">
-                                <i class="fas fa-bell"></i> Notifications
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'wishlist_detail' %}" class="account-nav-link">
-                                <i class="fas fa-heart"></i> Wishlist
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'active_sessions' %}" class="account-nav-link">
-                                <i class="fas fa-shield-alt"></i> Active Sessions
-                            </a>
-                        </li>
-                        <li class="account-nav-item">
-                            <a href="{% url 'logout' %}" class="account-nav-link">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
                 </div>
             </div>
             
-            <!-- Orders Content -->
+            <!-- Order Listing -->
             <div class="col-lg-9">
-                <div class="account-card">
-                    <h3 class="account-card-title">Order History</h3>
-                    
-                    <!-- Filter & Search -->
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <form method="get" action="{% url 'order_history' %}">
-                                <div class="input-group">
-                                    <select name="status" class="form-select">
-                                        <option value="">All Orders</option>
-                                        <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>Pending</option>
-                                        <option value="PROCESSING" {% if request.GET.status == 'PROCESSING' %}selected{% endif %}>Processing</option>
-                                        <option value="SHIPPED" {% if request.GET.status == 'SHIPPED' %}selected{% endif %}>Shipped</option>
-                                        <option value="DELIVERED" {% if request.GET.status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
-                                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
-                                    </select>
-                                    <button type="submit" class="btn btn-primary">Filter</button>
-                                </div>
-                            </form>
+                <!-- Filter Form -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h4 class="mb-0 h5">Filter Orders</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="get" class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                                {{ form.status }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.date_from.id_for_label }}" class="form-label">From Date</label>
+                                {{ form.date_from }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.date_to.id_for_label }}" class="form-label">To Date</label>
+                                {{ form.date_to }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.order_number.id_for_label }}" class="form-label">Order Number</label>
+                                {{ form.order_number }}
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                                <a href="{% url 'order_history' %}" class="btn btn-outline-secondary ms-2">Reset</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Orders List -->
+                {% if orders %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0 h5">Your Orders</h4>
+                            <span class="badge bg-primary">{{ orders.paginator.count }} Orders</span>
                         </div>
-                        <div class="col-md-6">
-                            <form method="get" action="{% url 'order_history' %}">
-                                <div class="input-group">
-                                    <input type="text" name="search" class="form-control" placeholder="Search by order number" value="{{ request.GET.search|default:'' }}">
-                                    <button type="submit" class="btn btn-primary">Search</button>
-                                </div>
-                            </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'order_detail' order.order_number %}" class="fw-medium text-primary">
+                                                #{{ order.order_number }}
+                                            </a>
+                                        </td>
+                                        <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                                        </td>
+                                        <td>{{ order.total|currency }}</td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <a href="{% url 'order_detail' order.order_number %}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="View Order">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                
+                                                {% if order.status == 'SHIPPED' or order.status == 'PROCESSING' %}
+                                                <a href="{% url 'order_tracking' order.order_number %}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Track Order">
+                                                    <i class="fas fa-truck"></i>
+                                                </a>
+                                                {% endif %}
+                                                
+                                                <a href="{% url 'order_invoice' order.order_number %}" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="View Invoice">
+                                                    <i class="fas fa-file-invoice"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     
-                    <!-- Orders List -->
-                    {% if orders %}
-                        {% for order in orders %}
-                            <div class="order-card mb-3">
-                                <div class="order-header">
-                                    <div>
-                                        <div class="order-id">Order #{{ order.order_number }}</div>
-                                        <div class="order-date">{{ order.created_at|date:"F d, Y" }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="order-status status-{{ order.status|lower }}">{{ order.get_status_display }}</div>
-                                    </div>
-                                </div>
-                                <div class="order-body">
-                                    {% for item in order.items.all %}
-                                        <div class="order-product">
-                                            <div class="order-product-img">
-                                                {% if item.product.default_image %}
-                                                <img src="{{ item.product.default_image.url }}" alt="{{ item.product.name }}">
-                                                {% else %}
-                                                <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ item.product.name }}">
-                                                {% endif %}
-                                            </div>
-                                            <div class="order-product-details">
-                                                <h5 class="order-product-name">{{ item.product.name }}</h5>
-                                                <div class="order-product-meta">
-                                                    Quantity: {{ item.quantity }}
-                                                </div>
-                                                <div class="order-product-price">₹{{ item.total }}</div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <div class="order-footer">
-                                    <div class="order-total">Total: ₹{{ order.total }}</div>
-                                    <div class="order-actions">
-                                        <a href="{% url 'order_detail' order.order_number %}" class="btn btn-sm btn-outline-primary">View Details</a>
-                                        {% if order.status == 'PENDING' or order.status == 'PROCESSING' %}
-                                            <form method="post" action="{% url 'cancel_order' order.order_number %}" class="d-inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-outline-danger ms-2" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
-                                            </form>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                        
-                        <!-- Pagination -->
-                        {% if orders.paginator.num_pages > 1 %}
-                        <nav aria-label="Page navigation" class="mt-4">
-                            <ul class="pagination pagination-custom justify-content-center">
+                    <!-- Pagination -->
+                    {% if orders.paginator.num_pages > 1 %}
+                    <div class="card-footer bg-white py-3">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mb-0">
                                 {% if orders.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Previous">
-                                        <i class="fas fa-chevron-left"></i>
+                                    <a class="page-link" href="?{% url_replace request 'page' orders.previous_page_number %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
                                     </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">&laquo;</span>
                                 </li>
                                 {% endif %}
                                 
                                 {% for i in orders.paginator.page_range %}
-                                {% if i == orders.number %}
-                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
-                                {% elif i > orders.number|add:"-3" and i < orders.number|add:"3" %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ i }}</a>
-                                </li>
+                                {% if orders.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% elif i > orders.number|add:'-3' and i < orders.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' i %}">{{ i }}</a></li>
                                 {% endif %}
                                 {% endfor %}
                                 
                                 {% if orders.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-label="Next">
-                                        <i class="fas fa-chevron-right"></i>
+                                    <a class="page-link" href="?{% url_replace request 'page' orders.next_page_number %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
                                     </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">&raquo;</span>
                                 </li>
                                 {% endif %}
                             </ul>
                         </nav>
-                        {% endif %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            <div class="display-1 text-muted mb-4">
-                                <i class="fas fa-shopping-bag"></i>
-                            </div>
-                            <h3 class="mb-3">No orders found</h3>
-                            {% if request.GET.status or request.GET.search %}
-                                <p>No orders match your search criteria. Try different filters or search terms.</p>
-                                <a href="{% url 'order_history' %}" class="btn btn-outline-primary">View All Orders</a>
-                            {% else %}
-                                <p>You haven't placed any orders yet.</p>
-                                <a href="{% url 'product_list' %}" class="btn btn-primary">Start Shopping</a>
-                            {% endif %}
-                        </div>
+                    </div>
                     {% endif %}
                 </div>
+                {% else %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-5 text-center">
+                        <div class="empty-orders mb-4">
+                            <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+                            <h3>No Orders Found</h3>
+                            <p class="text-muted mb-4">You haven't placed any orders yet or no orders match your filter criteria.</p>
+                            <a href="{% url 'product_list' %}" class="btn btn-primary">Start Shopping</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Status Badges */
+    .badge.bg-pending {
+        background-color: var(--warning-color);
+    }
+    
+    .badge.bg-processing {
+        background-color: var(--info-color);
+    }
+    
+    .badge.bg-shipped {
+        background-color: var(--primary-color);
+    }
+    
+    .badge.bg-delivered {
+        background-color: var(--success-color);
+    }
+    
+    .badge.bg-cancelled {
+        background-color: var(--danger-color);
+    }
+    
+    .badge.bg-refunded {
+        background-color: var(--secondary-color);
+    }
+    
+    .badge.bg-on_hold {
+        background-color: var(--gray-color);
+    }
+    
+    .badge.bg-completed {
+        background-color: var(--success-color);
+    }
+    
+    /* Account Navigation */
+    .account-nav .nav-link {
+        color: var(--secondary-color);
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+    }
+    
+    .account-nav .nav-link:hover,
+    .account-nav .nav-link.active {
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+    }
+    
+    .account-nav .nav-link.active {
+        font-weight: 600;
+    }
+    
+    /* Responsive table */
+    @media (max-width: 767px) {
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .table th,
+        .table td {
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

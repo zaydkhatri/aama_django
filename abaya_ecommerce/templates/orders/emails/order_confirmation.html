@@ -1,0 +1,192 @@
+<!-- templates/orders/emails/order_confirmation.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .header h1 {
+            color: #A1B8C0;
+            margin: 0;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .thank-you {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #071E26;
+        }
+        .order-info {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .address-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #A1B8C0;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #777;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        table th {
+            background-color: #f5f5f5;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Abaya Elegance</h1>
+            <p>Premium Islamic Clothing Store</p>
+        </div>
+        
+        <div class="content">
+            <div class="thank-you">
+                <p>Thank You for Your Order!</p>
+            </div>
+            
+            <p>Dear {{ user.name }},</p>
+            <p>We're thrilled to confirm your order has been received and is now being processed. Here are your order details:</p>
+            
+            <div class="order-info">
+                <h3>Order Information</h3>
+                <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+                <p><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+                <p><strong>Payment Method:</strong> {{ order.payments.first.get_payment_method_display }}</p>
+                <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+            </div>
+            
+            <div class="row">
+                <div class="address-box">
+                    <h3>Shipping Address</h3>
+                    <p>{{ order.shipping_address.address_line1 }}<br>
+                    {% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}<br>{% endif %}
+                    {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
+                    {{ order.shipping_address.country }}</p>
+                </div>
+                
+                <div class="address-box">
+                    <h3>Billing Address</h3>
+                    <p>{{ order.billing_address.address_line1 }}<br>
+                    {% if order.billing_address.address_line2 %}{{ order.billing_address.address_line2 }}<br>{% endif %}
+                    {{ order.billing_address.city }}, {{ order.billing_address.state }} {{ order.billing_address.postal_code }}<br>
+                    {{ order.billing_address.country }}</p>
+                </div>
+            </div>
+            
+            <h3>Order Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ order.currency.symbol }}{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Subtotal</td>
+                        <td>{{ order.currency.symbol }}{{ order.subtotal }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Shipping</td>
+                        <td>{{ order.currency.symbol }}{{ order.shipping_amount }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Tax</td>
+                        <td>{{ order.currency.symbol }}{{ order.tax_amount }}</td>
+                    </tr>
+                    {% if order.discount_amount > 0 %}
+                    <tr>
+                        <td colspan="2">Discount</td>
+                        <td>-{{ order.currency.symbol }}{{ order.discount_amount }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td>{{ order.currency.symbol }}{{ order.total }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ site_url }}{% url 'order_detail' order.order_number %}" class="button">View Order Details</a>
+            </div>
+            
+            <p>We'll notify you when your order has been shipped. If you have any questions or need assistance with your order, please don't hesitate to <a href="{{ site_url }}{% url 'contact' %}">contact our customer service team</a>.</p>
+            
+            <p>Thank you for shopping with Abaya Elegance!</p>
+            
+            <p>Warm regards,<br>
+            The Abaya Elegance Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {% now "Y" %} Abaya Elegance. All rights reserved.</p>
+            <p>123 Fashion Street, Mumbai, Maharashtra, 400001, India</p>
+        </div>
+    </div>
+</body>
+</html>

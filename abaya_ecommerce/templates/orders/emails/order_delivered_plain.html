@@ -1,0 +1,38 @@
+Your Order Has Been Delivered!
+
+Dear {{ user.name }},
+
+Great news! Your order has been delivered successfully. We hope you enjoy your purchase!
+
+ORDER INFORMATION
+----------------
+Order Number: {{ order.order_number }}
+Order Date: {{ order.created_at|date:"F j, Y" }}
+Delivery Date: {{ order.shipments.first.actual_delivery|date:"F j, Y"|default:today }}
+Shipping Address:
+{{ order.shipping_address.address_line1 }}
+{% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}{% endif %}
+{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}
+{{ order.shipping_address.country }}
+
+ORDER SUMMARY
+------------
+{% for item in order.items.all %}
+{{ item.product.name }} x {{ item.quantity }} - {{ order.currency.symbol }}{{ item.total }}
+{% endfor %}
+
+Total: {{ order.currency.symbol }}{{ order.total }}
+
+We'd love to hear your thoughts on your purchase! 
+You can write a review at: {{ site_url }}{% url 'order_detail' order.order_number %}
+
+If you're not satisfied with your purchase or have any issues, please don't hesitate to contact our customer service team at support@abayaelegance.com.
+
+Thank you for shopping with Abaya Elegance!
+
+Warm regards,
+The Abaya Elegance Team
+
+-------------------
+© {% now "Y" %} Abaya Elegance. All rights reserved.
+123 Fashion Street, Mumbai, Maharashtra, 400001, India

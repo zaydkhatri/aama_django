@@ -1,0 +1,50 @@
+Your Order Has Been Shipped!
+
+Dear {{ user.name }},
+
+Great news! Your order has been shipped and is on its way to you. Here are the details:
+
+ORDER INFORMATION
+----------------
+Order Number: {{ order.order_number }}
+Order Date: {{ order.created_at|date:"F j, Y" }}
+Shipping Address:
+{{ order.shipping_address.address_line1 }}
+{% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}{% endif %}
+{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}
+{{ order.shipping_address.country }}
+
+{% if shipments %}
+SHIPPING INFORMATION
+-------------------
+{% for shipment in shipments %}
+Carrier: {{ shipment.carrier|default:"Our Delivery Partner" }}
+{% if shipment.tracking_number %}Tracking Number: {{ shipment.tracking_number }}{% endif %}
+{% if shipment.estimated_delivery %}Estimated Delivery: {{ shipment.estimated_delivery|date:"F j, Y" }}{% endif %}
+{% endfor %}
+
+You can track your order at: {{ site_url }}{% url 'order_tracking' order.order_number %}
+{% endif %}
+
+ORDER SUMMARY
+------------
+{% for item in order.items.all %}
+{{ item.product.name }} x {{ item.quantity }} - {{ order.currency.symbol }}{{ item.total }}
+{% endfor %}
+
+Subtotal: {{ order.currency.symbol }}{{ order.subtotal }}
+Shipping: {{ order.currency.symbol }}{{ order.shipping_amount }}
+Tax: {{ order.currency.symbol }}{{ order.tax_amount }}
+{% if order.discount_amount > 0 %}Discount: -{{ order.currency.symbol }}{{ order.discount_amount }}{% endif %}
+Total: {{ order.currency.symbol }}{{ order.total }}
+
+If you have any questions about your order, please contact our customer service team at support@abayaelegance.com.
+
+Thank you for shopping with us!
+
+Warm regards,
+The Abaya Elegance Team
+
+-------------------
+© {% now "Y" %} Abaya Elegance. All rights reserved.
+123 Fashion Street, Mumbai, Maharashtra, 400001, India

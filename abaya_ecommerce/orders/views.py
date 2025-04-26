@@ -146,6 +146,10 @@ def checkout(request):
         messages.error(request, 'Your cart is empty. Please add items before checkout.')
         return redirect('cart_detail')
     
+    # Get selected currency
+    from core.currency_utils import get_selected_currency
+    selected_currency = get_selected_currency(request)
+    
     # Get default currency
     default_currency = Currency.objects.filter(is_default=True).first()
     if not default_currency:
@@ -157,7 +161,7 @@ def checkout(request):
             is_default=True
         )
     
-    # Initialize amounts
+    # Initialize amounts in default currency
     cart_total = cart.get_total_price()
     discount = Decimal('0.00')
     coupon = None
@@ -214,11 +218,11 @@ def checkout(request):
                     tax_amount = calculate_tax(cart_total, shipping_address)
                     total_amount = cart_total + shipping_amount + tax_amount
                     
-                    # Create the order
+                    # Create the order with the selected currency
                     order = Order.objects.create(
                         user=user,
                         order_number=generate_order_number(),
-                        currency=default_currency,
+                        currency=selected_currency,  # Store the selected currency
                         shipping_address=shipping_address,
                         billing_address=billing_address,
                         subtotal=cart.get_total_price(),
@@ -255,7 +259,7 @@ def checkout(request):
                         order=order,
                         payment_method=payment_method,
                         amount=total_amount,
-                        currency=default_currency.code,
+                        currency=selected_currency.code,
                         status='PENDING'
                     )
                     
@@ -282,21 +286,48 @@ def checkout(request):
     else:
         form = CheckoutForm(user=user)
     
-    # Calculate totals for display
-    shipping_estimate = calculate_shipping(cart_total, user.addresses.filter(is_default=True).first() if user.addresses.exists() else None) if cart_total > 0 else Decimal('0.00')
-    tax_estimate = calculate_tax(cart_total, user.addresses.filter(is_default=True).first() if user.addresses.exists() else None) if cart_total > 0 else Decimal('0.00')
-    total_estimate = cart_total + shipping_estimate + tax_estimate
+    # Calculate totals for display in current currency
+    from core.currency_utils import convert_price
+    
+    # Convert amounts to selected currency if needed
+    if selected_currency.id != default_currency.id:
+        cart_total_display = convert_price(cart_total, default_currency, selected_currency)
+        discount_display = convert_price(discount, default_currency, selected_currency)
+    else:
+        cart_total_display = cart_total
+        discount_display = discount
+    
+    # Calculate shipping and tax estimates in the selected currency
+    shipping_address = user.addresses.filter(is_default=True, address_type__in=['SHIPPING', 'BOTH']).first()
+    if not shipping_address and user.addresses.exists():
+        shipping_address = user.addresses.first()
+    
+    if shipping_address:
+        shipping_estimate = calculate_shipping(cart_total, shipping_address)
+        tax_estimate = calculate_tax(cart_total, shipping_address)
+    else:
+        shipping_estimate = Decimal('100.00')  # Default shipping
+        tax_estimate = cart_total * Decimal('0.18')  # Default tax (18%)
+    
+    # Convert shipping and tax estimates to selected currency
+    if selected_currency.id != default_currency.id:
+        shipping_estimate = convert_price(shipping_estimate, default_currency, selected_currency)
+        tax_estimate = convert_price(tax_estimate, default_currency, selected_currency)
+    
+    # Calculate total estimate in selected currency
+    total_estimate = cart_total_display + shipping_estimate + tax_estimate - discount_display
     
     return render(request, 'orders/checkout.html', {
         'form': form,
         'cart': cart,
-        'cart_total': cart_total,
-        'discount': discount,
+        'cart_total': cart_total_display,
+        'discount': discount_display,
         'shipping_estimate': shipping_estimate,
         'tax_estimate': tax_estimate,
         'total_estimate': total_estimate,
         'coupon_form': CouponForm(),
-        'applied_coupon': coupon
+        'applied_coupon': coupon,
+        'selected_currency': selected_currency
     })
 
 @login_required

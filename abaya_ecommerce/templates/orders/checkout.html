@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
 
 {% block title %}Checkout | Abaya Elegance{% endblock %}
+
+{% block meta_description %}Complete your purchase securely at Abaya Elegance. Review your cart, shipping details, and payment options.{% endblock %}
 
 {% block content %}
 <!-- Breadcrumb -->
@@ -24,122 +28,182 @@
 <!-- Checkout Section -->
 <section class="checkout-section section-padding">
     <div class="container">
-        <form action="{% url 'checkout' %}" method="post" id="checkout-form" class="form-custom">
+        {% if cart.items.count == 0 %}
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="empty-cart mb-4">
+                    <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+                    <h3>Your cart is empty</h3>
+                    <p class="mb-4">Add items to your cart before proceeding to checkout.</p>
+                    <a href="{% url 'product_list' %}" class="btn btn-primary">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <form method="post" action="{% url 'checkout' %}" class="checkout-form">
             {% csrf_token %}
-            
             <div class="row">
-                <!-- Checkout Form -->
-                <div class="col-lg-8 mb-4 mb-lg-0">
+                <!-- Customer Information and Shipping -->
+                <div class="col-lg-8">
                     <!-- Customer Information -->
-                    <div class="checkout-card mb-4">
-                        <h3 class="checkout-title">Customer Information</h3>
-                        
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="id_email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                {{ form.email }}
-                                {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="id_name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                                {{ form.name }}
-                                {% if form.name.errors %}
-                                <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="id_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                {{ form.phone }}
-                                {% if form.phone.errors %}
-                                <div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>
-                                {% endif %}
+                    <div class="checkout-title">
+                        <h3>Customer Information</h3>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.email.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                    {{ form.phone }}
+                                    {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.phone.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Shipping Address -->
-                    <div class="checkout-card mb-4">
-                        <h3 class="checkout-title">Shipping Address</h3>
-                        
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="shipping_address_choice" id="shipping_existing" value="existing" {% if form.shipping_address_choice.value == 'existing' %}checked{% endif %}>
-                                <label class="form-check-label" for="shipping_existing">Use Existing Address</label>
+                    <div class="checkout-title">
+                        <h3>Shipping Address</h3>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <div class="mb-3">
+                                <div class="form-check form-check-inline">
+                                    {{ form.shipping_address_choice.0 }}
+                                    <label class="form-check-label" for="{{ form.shipping_address_choice.0.id_for_label }}">
+                                        Use an existing address
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    {{ form.shipping_address_choice.1 }}
+                                    <label class="form-check-label" for="{{ form.shipping_address_choice.1.id_for_label }}">
+                                        Add a new address
+                                    </label>
+                                </div>
                             </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="shipping_address_choice" id="shipping_new" value="new" {% if form.shipping_address_choice.value == 'new' %}checked{% endif %}>
-                                <label class="form-check-label" for="shipping_new">Add New Address</label>
+
+                            <div id="existing-shipping-address" class="mb-3">
+                                <label for="{{ form.existing_shipping_address.id_for_label }}" class="form-label">Select Address</label>
+                                {{ form.existing_shipping_address }}
+                                {% if form.existing_shipping_address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.existing_shipping_address.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
                             </div>
-                        </div>
-                        
-                        <div id="existing_shipping_address_div" class="mb-3 {% if form.shipping_address_choice.value == 'new' %}d-none{% endif %}">
-                            <label for="id_existing_shipping_address" class="form-label">Select Address <span class="text-danger">*</span></label>
-                            {{ form.existing_shipping_address }}
-                            {% if form.existing_shipping_address.errors %}
-                            <div class="invalid-feedback d-block">{{ form.existing_shipping_address.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div id="new_shipping_address_div" class="{% if form.shipping_address_choice.value == 'existing' %}d-none{% endif %}">
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label for="id_shipping_address_line1" class="form-label">Address Line 1 <span class="text-danger">*</span></label>
-                                    {{ form.shipping_address_line1 }}
-                                    {% if form.shipping_address_line1.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.shipping_address_line1.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="col-md-12 mb-3">
-                                    <label for="id_shipping_address_line2" class="form-label">Address Line 2</label>
-                                    {{ form.shipping_address_line2 }}
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_shipping_city" class="form-label">City <span class="text-danger">*</span></label>
-                                    {{ form.shipping_city }}
-                                    {% if form.shipping_city.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.shipping_city.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_shipping_state" class="form-label">State <span class="text-danger">*</span></label>
-                                    {{ form.shipping_state }}
-                                    {% if form.shipping_state.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.shipping_state.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_shipping_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
-                                    {{ form.shipping_postal_code }}
-                                    {% if form.shipping_postal_code.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.shipping_postal_code.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_shipping_country" class="form-label">Country <span class="text-danger">*</span></label>
-                                    {{ form.shipping_country }}
-                                    {% if form.shipping_country.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.shipping_country.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_shipping_phone" class="form-label">Phone Number</label>
-                                    {{ form.shipping_phone }}
-                                </div>
-                                
-                                <div class="col-md-12 mb-3">
-                                    <div class="form-check">
+
+                            <div id="new-shipping-address" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.shipping_address_line1.id_for_label }}" class="form-label">Address Line 1 <span class="text-danger">*</span></label>
+                                        {{ form.shipping_address_line1 }}
+                                        {% if form.shipping_address_line1.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_address_line1.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.shipping_address_line2.id_for_label }}" class="form-label">Address Line 2</label>
+                                        {{ form.shipping_address_line2 }}
+                                        {% if form.shipping_address_line2.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_address_line2.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.shipping_city.id_for_label }}" class="form-label">City <span class="text-danger">*</span></label>
+                                        {{ form.shipping_city }}
+                                        {% if form.shipping_city.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_city.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.shipping_state.id_for_label }}" class="form-label">State/Province <span class="text-danger">*</span></label>
+                                        {{ form.shipping_state }}
+                                        {% if form.shipping_state.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_state.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.shipping_postal_code.id_for_label }}" class="form-label">Postal Code <span class="text-danger">*</span></label>
+                                        {{ form.shipping_postal_code }}
+                                        {% if form.shipping_postal_code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_postal_code.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.shipping_country.id_for_label }}" class="form-label">Country <span class="text-danger">*</span></label>
+                                        {{ form.shipping_country }}
+                                        {% if form.shipping_country.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_country.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.shipping_phone.id_for_label }}" class="form-label">Phone <span class="text-danger">*</span></label>
+                                        {{ form.shipping_phone }}
+                                        {% if form.shipping_phone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.shipping_phone.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-12 mb-3 form-check ms-1">
                                         {{ form.save_shipping_address }}
-                                        <label class="form-check-label" for="id_save_shipping_address">
+                                        <label class="form-check-label" for="{{ form.save_shipping_address.id_for_label }}">
                                             Save this address for future orders
                                         </label>
                                     </div>
@@ -147,96 +211,130 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Billing Address -->
-                    <div class="checkout-card mb-4">
-                        <h3 class="checkout-title">Billing Address</h3>
-                        
-                        <div class="mb-3">
-                            <div class="form-check">
+                    <div class="checkout-title">
+                        <h3>Billing Address</h3>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <div class="mb-3 form-check">
                                 {{ form.billing_same_as_shipping }}
-                                <label class="form-check-label" for="id_billing_same_as_shipping">
+                                <label class="form-check-label" for="{{ form.billing_same_as_shipping.id_for_label }}">
                                     Same as shipping address
                                 </label>
                             </div>
-                        </div>
-                        
-                        <div id="billing_address_section" class="{% if form.billing_same_as_shipping.value %}d-none{% endif %}">
-                            <div class="mb-3">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="billing_address_choice" id="billing_existing" value="existing" {% if form.billing_address_choice.value == 'existing' %}checked{% endif %}>
-                                    <label class="form-check-label" for="billing_existing">Use Existing Address</label>
+
+                            <div id="billing-address-form" style="display: none;">
+                                <div class="mb-3">
+                                    <div class="form-check form-check-inline">
+                                        {{ form.billing_address_choice.0 }}
+                                        <label class="form-check-label" for="{{ form.billing_address_choice.0.id_for_label }}">
+                                            Use an existing address
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        {{ form.billing_address_choice.1 }}
+                                        <label class="form-check-label" for="{{ form.billing_address_choice.1.id_for_label }}">
+                                            Add a new address
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="billing_address_choice" id="billing_new" value="new" {% if form.billing_address_choice.value == 'new' %}checked{% endif %}>
-                                    <label class="form-check-label" for="billing_new">Add New Address</label>
+
+                                <div id="existing-billing-address" class="mb-3">
+                                    <label for="{{ form.existing_billing_address.id_for_label }}" class="form-label">Select Address</label>
+                                    {{ form.existing_billing_address }}
+                                    {% if form.existing_billing_address.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.existing_billing_address.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </div>
-                            </div>
-                            
-                            <div id="existing_billing_address_div" class="mb-3 {% if form.billing_address_choice.value == 'new' %}d-none{% endif %}">
-                                <label for="id_existing_billing_address" class="form-label">Select Address <span class="text-danger">*</span></label>
-                                {{ form.existing_billing_address }}
-                                {% if form.existing_billing_address.errors %}
-                                <div class="invalid-feedback d-block">{{ form.existing_billing_address.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            
-                            <div id="new_billing_address_div" class="{% if form.billing_address_choice.value == 'existing' %}d-none{% endif %}">
-                                <div class="row">
-                                    <div class="col-md-12 mb-3">
-                                        <label for="id_billing_address_line1" class="form-label">Address Line 1 <span class="text-danger">*</span></label>
-                                        {{ form.billing_address_line1 }}
-                                        {% if form.billing_address_line1.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.billing_address_line1.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <div class="col-md-12 mb-3">
-                                        <label for="id_billing_address_line2" class="form-label">Address Line 2</label>
-                                        {{ form.billing_address_line2 }}
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_billing_city" class="form-label">City <span class="text-danger">*</span></label>
-                                        {{ form.billing_city }}
-                                        {% if form.billing_city.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.billing_city.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_billing_state" class="form-label">State <span class="text-danger">*</span></label>
-                                        {{ form.billing_state }}
-                                        {% if form.billing_state.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.billing_state.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_billing_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
-                                        {{ form.billing_postal_code }}
-                                        {% if form.billing_postal_code.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.billing_postal_code.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_billing_country" class="form-label">Country <span class="text-danger">*</span></label>
-                                        {{ form.billing_country }}
-                                        {% if form.billing_country.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.billing_country.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_billing_phone" class="form-label">Phone Number</label>
-                                        {{ form.billing_phone }}
-                                    </div>
-                                    
-                                    <div class="col-md-12 mb-3">
-                                        <div class="form-check">
+
+                                <div id="new-billing-address" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="{{ form.billing_address_line1.id_for_label }}" class="form-label">Address Line 1 <span class="text-danger">*</span></label>
+                                            {{ form.billing_address_line1 }}
+                                            {% if form.billing_address_line1.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_address_line1.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-12 mb-3">
+                                            <label for="{{ form.billing_address_line2.id_for_label }}" class="form-label">Address Line 2</label>
+                                            {{ form.billing_address_line2 }}
+                                            {% if form.billing_address_line2.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_address_line2.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_city.id_for_label }}" class="form-label">City <span class="text-danger">*</span></label>
+                                            {{ form.billing_city }}
+                                            {% if form.billing_city.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_city.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_state.id_for_label }}" class="form-label">State/Province <span class="text-danger">*</span></label>
+                                            {{ form.billing_state }}
+                                            {% if form.billing_state.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_state.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_postal_code.id_for_label }}" class="form-label">Postal Code <span class="text-danger">*</span></label>
+                                            {{ form.billing_postal_code }}
+                                            {% if form.billing_postal_code.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_postal_code.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_country.id_for_label }}" class="form-label">Country <span class="text-danger">*</span></label>
+                                            {{ form.billing_country }}
+                                            {% if form.billing_country.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_country.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="{{ form.billing_phone.id_for_label }}" class="form-label">Phone <span class="text-danger">*</span></label>
+                                            {{ form.billing_phone }}
+                                            {% if form.billing_phone.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.billing_phone.errors %}
+                                                {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-12 mb-3 form-check ms-1">
                                             {{ form.save_billing_address }}
-                                            <label class="form-check-label" for="id_save_billing_address">
+                                            <label class="form-check-label" for="{{ form.save_billing_address.id_for_label }}">
                                                 Save this address for future orders
                                             </label>
                                         </div>
@@ -245,259 +343,233 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Payment Method -->
-                    <div class="checkout-card mb-4">
-                        <h3 class="checkout-title">Payment Method</h3>
-                        
-                        <div class="payment-methods">
-                            <!-- Credit Card -->
-                            <div class="payment-method {% if form.payment_method.value == 'CREDIT_CARD' %}active{% endif %}">
-                                <div class="payment-method-header">
-                                    <div class="payment-method-radio">
-                                        <input type="radio" class="form-check-input" name="payment_method" id="payment_credit_card" value="CREDIT_CARD" {% if form.payment_method.value == 'CREDIT_CARD' %}checked{% endif %} required>
-                                    </div>
-                                    <label class="payment-method-title" for="payment_credit_card">Credit Card</label>
-                                    <div class="payment-method-icons">
-                                        <img src="{{ STATIC_URL }}images/visa.png" alt="Visa" class="payment-method-icon" height="24">
-                                        <img src="{{ STATIC_URL }}images/mastercard.png" alt="Mastercard" class="payment-method-icon" height="24">
-                                        <img src="{{ STATIC_URL }}images/amex.png" alt="American Express" class="payment-method-icon" height="24">
-                                    </div>
-                                </div>
-                                <div class="payment-method-desc">
-                                    Pay securely with your credit card.
-                                </div>
-                            </div>
-                            
-                            <!-- Debit Card -->
-                            <div class="payment-method {% if form.payment_method.value == 'DEBIT_CARD' %}active{% endif %}">
-                                <div class="payment-method-header">
-                                    <div class="payment-method-radio">
-                                        <input type="radio" class="form-check-input" name="payment_method" id="payment_debit_card" value="DEBIT_CARD" {% if form.payment_method.value == 'DEBIT_CARD' %}checked{% endif %} required>
-                                    </div>
-                                    <label class="payment-method-title" for="payment_debit_card">Debit Card</label>
-                                    <div class="payment-method-icons">
-                                        <img src="{{ STATIC_URL }}images/rupay.png" alt="RuPay" class="payment-method-icon" height="24">
-                                        <img src="{{ STATIC_URL }}images/visa.png" alt="Visa" class="payment-method-icon" height="24">
-                                        <img src="{{ STATIC_URL }}images/mastercard.png" alt="Mastercard" class="payment-method-icon" height="24">
+
+                    <!-- Payment Methods -->
+                    <div class="checkout-title">
+                        <h3>Payment Method</h3>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <div class="payment-methods">
+                                {% for method_choice in form.payment_method %}
+                                <div class="payment-method {% if forloop.first %}active{% endif %}">
+                                    <div class="payment-method-header">
+                                        <div class="payment-method-radio">
+                                            {{ method_choice.tag }}
+                                        </div>
+                                        <label class="payment-method-title" for="{{ method_choice.id_for_label }}">
+                                            {{ method_choice.choice_label }}
+                                        </label>
+                                        <div class="payment-method-icons">
+                                            {% if 'CREDIT_CARD' in method_choice.choice_value or 'DEBIT_CARD' in method_choice.choice_value %}
+                                            <img src="{% static 'images/visa.png' %}" alt="Visa" class="payment-method-icon" height="24">
+                                            <img src="{% static 'images/mastercard.png' %}" alt="Mastercard" class="payment-method-icon" height="24">
+                                            <img src="{% static 'images/amex.png' %}" alt="American Express" class="payment-method-icon" height="24">
+                                            {% elif 'UPI' in method_choice.choice_value %}
+                                            <img src="{% static 'images/upi.png' %}" alt="UPI" class="payment-method-icon" height="24">
+                                            {% elif 'WALLET' in method_choice.choice_value %}
+                                            <img src="{% static 'images/paytm.png' %}" alt="Paytm" class="payment-method-icon" height="24">
+                                            <img src="{% static 'images/phonepe.png' %}" alt="PhonePe" class="payment-method-icon" height="24">
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="payment-method-desc">
-                                    Pay with your debit card.
-                                </div>
-                            </div>
-                            
-                            <!-- UPI -->
-                            <div class="payment-method {% if form.payment_method.value == 'UPI' %}active{% endif %}">
-                                <div class="payment-method-header">
-                                    <div class="payment-method-radio">
-                                        <input type="radio" class="form-check-input" name="payment_method" id="payment_upi" value="UPI" {% if form.payment_method.value == 'UPI' %}checked{% endif %} required>
-                                    </div>
-                                    <label class="payment-method-title" for="payment_upi">UPI</label>
-                                    <div class="payment-method-icons">
-                                        <img src="{{ STATIC_URL }}images/gpay.png" alt="Google Pay" class="payment-method-icon" height="24">
-                                        <img src="{{ STATIC_URL }}images/phonepe.png" alt="PhonePe" class="payment-method-icon" height="24">
-                                        <img src="{{ STATIC_URL }}images/paytm.png" alt="Paytm" class="payment-method-icon" height="24">
-                                    </div>
-                                </div>
-                                <div class="payment-method-desc">
-                                    Pay using UPI apps like Google Pay, PhonePe, Paytm, etc.
-                                </div>
-                            </div>
-                            
-                            <!-- Net Banking -->
-                            <div class="payment-method {% if form.payment_method.value == 'NET_BANKING' %}active{% endif %}">
-                                <div class="payment-method-header">
-                                    <div class="payment-method-radio">
-                                        <input type="radio" class="form-check-input" name="payment_method" id="payment_net_banking" value="NET_BANKING" {% if form.payment_method.value == 'NET_BANKING' %}checked{% endif %} required>
-                                    </div>
-                                    <label class="payment-method-title" for="payment_net_banking">Net Banking</label>
-                                </div>
-                                <div class="payment-method-desc">
-                                    Pay using your internet banking account.
-                                </div>
-                            </div>
-                            
-                            <!-- Cash on Delivery -->
-                            <div class="payment-method {% if form.payment_method.value == 'COD' %}active{% endif %}">
-                                <div class="payment-method-header">
-                                    <div class="payment-method-radio">
-                                        <input type="radio" class="form-check-input" name="payment_method" id="payment_cod" value="COD" {% if form.payment_method.value == 'COD' %}checked{% endif %} required>
-                                    </div>
-                                    <label class="payment-method-title" for="payment_cod">Cash on Delivery</label>
-                                </div>
-                                <div class="payment-method-desc">
-                                    Pay when you receive your order. Additional COD charges may apply.
-                                </div>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Order Notes -->
-                    <div class="checkout-card">
-                        <h3 class="checkout-title">Additional Information</h3>
-                        
-                        <div class="mb-3">
-                            <label for="id_notes" class="form-label">Order Notes (Optional)</label>
-                            {{ form.notes }}
-                            <div class="form-text">Any specific instructions for delivery or special requirements.</div>
+                    <div class="checkout-title">
+                        <h3>Additional Information</h3>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <div class="mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Order Notes (optional)</label>
+                                {{ form.notes }}
+                                <div class="form-text">Add any special instructions or notes about your order here.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Order Summary -->
                 <div class="col-lg-4">
-                    <div class="order-review sticky-lg-top" style="top: 30px; z-index: 100;">
-                        <h3 class="summary-title">Order Summary</h3>
-                        
-                        <table class="table review-table">
-                            <tbody>
-                                {% for item in cart.items.all %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="me-2">{{ item.quantity }}x</div>
-                                            <div>{{ item.product.name | truncatechars:30 }}</div>
-                                        </div>
-                                    </td>
-                                    <td class="text-end">₹{{ item.get_total_price }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        
-                        <div class="summary-item">
-                            <div class="summary-key">Subtotal</div>
-                            <div class="summary-value">₹{{ cart_total }}</div>
-                        </div>
-                        
-                        {% if discount > 0 %}
-                        <div class="summary-item text-success">
-                            <div class="summary-key">Discount</div>
-                            <div class="summary-value">-₹{{ discount }}</div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="summary-item">
-                            <div class="summary-key">Shipping</div>
-                            <div class="summary-value">₹{{ shipping_estimate }}</div>
-                        </div>
-                        
-                        <div class="summary-item">
-                            <div class="summary-key">Tax</div>
-                            <div class="summary-value">₹{{ tax_estimate }}</div>
-                        </div>
-                        
-                        <div class="summary-item summary-total">
-                            <div class="summary-key">Total</div>
-                            <div class="summary-value">₹{{ total_estimate }}</div>
-                        </div>
-                        
-                        {% if applied_coupon %}
-                        <div class="alert alert-success mt-3 mb-3" role="alert">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>Coupon applied: {{ applied_coupon.code }}</strong><br>
-                                    <small>{{ applied_coupon.description }}</small>
-                                </div>
-                                <a href="{% url 'remove_coupon' %}" class="btn btn-sm btn-outline-danger">Remove</a>
+                    <div class="checkout-title">
+                        <h3>Order Summary</h3>
+                    </div>
+                    <div class="order-review card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h4 class="mb-4">Your Order</h4>
+                            
+                            <div class="table-responsive mb-4">
+                                <table class="table review-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in cart.items.all %}
+                                        <tr>
+                                            <td>
+                                                {{ item.product.name }} × {{ item.quantity }}
+                                                {% if item.product.attributes.exists %}
+                                                <small class="d-block text-muted">
+                                                    {% for attr in item.product.attributes.all %}
+                                                    {{ attr.attribute.name }}: {{ attr.attribute_value.value }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                </small>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">{{ item.get_total_price|currency }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th>Subtotal</th>
+                                            <td class="text-end">{{ cart_total|currency }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Shipping</th>
+                                            <td class="text-end">{{ shipping_estimate|currency }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Tax</th>
+                                            <td class="text-end">{{ tax_estimate|currency }}</td>
+                                        </tr>
+                                        {% if discount %}
+                                        <tr>
+                                            <th>Discount</th>
+                                            <td class="text-end text-danger">-{{ discount|currency }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr class="order-total">
+                                            <th>Total</th>
+                                            <td class="text-end"><strong>{{ total_estimate|currency }}</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
-                        </div>
-                        {% else %}
-                        <div class="coupon-section mt-3 mb-3">
-                            <div class="accordion" id="couponAccordion">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="couponHeading">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#couponCollapse" aria-expanded="false" aria-controls="couponCollapse">
-                                            Apply Coupon Code
-                                        </button>
-                                    </h2>
-                                    <div id="couponCollapse" class="accordion-collapse collapse" aria-labelledby="couponHeading" data-bs-parent="#couponAccordion">
-                                        <div class="accordion-body">
-                                            <form action="{% url 'apply_coupon' %}" method="post">
-                                                {% csrf_token %}
-                                                {{ coupon_form.code }}
-                                                <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">Apply Coupon</button>
-                                            </form>
-                                        </div>
+                            
+                            <!-- Coupon Code -->
+                            <div class="mb-4">
+                                <h5>Coupon Code</h5>
+                                {% if applied_coupon %}
+                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                                    <div>
+                                        <strong>{{ applied_coupon.code }}</strong>
+                                        <small class="d-block text-muted">{{ applied_coupon.description }}</small>
                                     </div>
+                                    <form action="{% url 'remove_coupon' %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                    </form>
                                 </div>
+                                {% else %}
+                                <form action="{% url 'apply_coupon' %}" method="post" id="coupon-form">
+                                    {% csrf_token %}
+                                    <div class="input-group">
+                                        {{ coupon_form.code }}
+                                        <button type="button" class="btn btn-primary">Apply</button>
+                                    </div>
+                                </form>
+                                {% endif %}
                             </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="terms-check mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="terms_check" required>
-                                <label class="form-check-label" for="terms_check">
-                                    I agree to the <a href="#" class="text-decoration-underline">terms and conditions</a> and <a href="#" class="text-decoration-underline">privacy policy</a>
-                                </label>
+                            
+                            <div class="review-footer">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        I have read and agree to the <a href="#">terms and conditions</a>, <a href="#">privacy policy</a>, and <a href="#">return policy</a>
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg w-100">Place Order</button>
                             </div>
-                        </div>
-                        
-                        <div class="review-footer">
-                            <button type="submit" class="btn btn-primary" id="place-order-btn">
-                                Place Order
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </form>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        // Toggle shipping address sections
-        $('input[name="shipping_address_choice"]').on('change', function() {
-            if ($(this).val() === 'existing') {
-                $('#existing_shipping_address_div').removeClass('d-none');
-                $('#new_shipping_address_div').addClass('d-none');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle shipping address form visibility
+        const shippingAddressChoice = document.querySelectorAll('input[name="shipping_address_choice"]');
+        const existingShippingAddress = document.getElementById('existing-shipping-address');
+        const newShippingAddress = document.getElementById('new-shipping-address');
+        
+        shippingAddressChoice.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                if (this.value === 'existing') {
+                    existingShippingAddress.style.display = 'block';
+                    newShippingAddress.style.display = 'none';
+                } else {
+                    existingShippingAddress.style.display = 'none';
+                    newShippingAddress.style.display = 'block';
+                }
+            });
+        });
+        
+        // Handle billing address form visibility
+        const billingSameAsShipping = document.getElementById('id_billing_same_as_shipping');
+        const billingAddressForm = document.getElementById('billing-address-form');
+        
+        billingSameAsShipping.addEventListener('change', function() {
+            if (this.checked) {
+                billingAddressForm.style.display = 'none';
             } else {
-                $('#existing_shipping_address_div').addClass('d-none');
-                $('#new_shipping_address_div').removeClass('d-none');
+                billingAddressForm.style.display = 'block';
             }
         });
         
-        // Toggle billing address sections
-        $('#id_billing_same_as_shipping').on('change', function() {
-            if ($(this).is(':checked')) {
-                $('#billing_address_section').addClass('d-none');
-            } else {
-                $('#billing_address_section').removeClass('d-none');
-            }
+        // Handle billing address choice
+        const billingAddressChoice = document.querySelectorAll('input[name="billing_address_choice"]');
+        const existingBillingAddress = document.getElementById('existing-billing-address');
+        const newBillingAddress = document.getElementById('new-billing-address');
+        
+        billingAddressChoice.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                if (this.value === 'existing') {
+                    existingBillingAddress.style.display = 'block';
+                    newBillingAddress.style.display = 'none';
+                } else {
+                    existingBillingAddress.style.display = 'none';
+                    newBillingAddress.style.display = 'block';
+                }
+            });
         });
         
-        // Toggle billing address type sections
-        $('input[name="billing_address_choice"]').on('change', function() {
-            if ($(this).val() === 'existing') {
-                $('#existing_billing_address_div').removeClass('d-none');
-                $('#new_billing_address_div').addClass('d-none');
-            } else {
-                $('#existing_billing_address_div').addClass('d-none');
-                $('#new_billing_address_div').removeClass('d-none');
-            }
-        });
+        // Set initial state
+        document.querySelector('input[name="shipping_address_choice"]:checked').dispatchEvent(new Event('change'));
+        billingSameAsShipping.dispatchEvent(new Event('change'));
+        
+        if (document.querySelector('input[name="billing_address_choice"]:checked')) {
+            document.querySelector('input[name="billing_address_choice"]:checked').dispatchEvent(new Event('change'));
+        }
         
         // Handle payment method selection
-        $('.payment-method').on('click', function() {
-            $('.payment-method').removeClass('active');
-            $(this).addClass('active');
-            $(this).find('input[type="radio"]').prop('checked', true);
-        });
+        const paymentMethods = document.querySelectorAll('.payment-method');
         
-        // Form validation before submit
-        $('#checkout-form').on('submit', function(e) {
-            if (!$('#terms_check').is(':checked')) {
-                e.preventDefault();
-                alert('Please agree to the terms and conditions to proceed.');
-                return false;
-            }
-            
-            $('#place-order-btn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
+        paymentMethods.forEach(function(method) {
+            method.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                paymentMethods.forEach(function(m) {
+                    m.classList.remove('active');
+                });
+                
+                this.classList.add('active');
+            });
         });
     });
 </script>

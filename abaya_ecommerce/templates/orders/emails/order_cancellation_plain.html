@@ -1,0 +1,45 @@
+Your Order Has Been Cancelled
+
+Dear {{ user.name }},
+
+We're confirming that your order has been cancelled as requested. Here are the details of the cancelled order:
+
+CANCELLATION DETAILS
+-------------------
+Order Number: {{ order.order_number }}
+Cancellation Date: {% now "F j, Y" %}
+Order Status: Cancelled
+
+ORDER INFORMATION
+----------------
+Order Date: {{ order.created_at|date:"F j, Y" }}
+Payment Method: {{ order.payments.first.get_payment_method_display }}
+{% if order.payment_status == 'REFUNDED' %}Refund Status: Refunded{% endif %}
+
+CANCELLED ITEMS
+--------------
+{% for item in order.items.all %}
+{{ item.product.name }} x {{ item.quantity }} - {{ order.currency.symbol }}{{ item.total }}
+{% endfor %}
+
+Total: {{ order.currency.symbol }}{{ order.total }}
+
+{% if order.payment_status == 'REFUNDED' %}
+REFUND INFORMATION
+-----------------
+A refund of {{ order.currency.symbol }}{{ order.total }} has been initiated to your original payment method. Please allow 5-10 business days for the refund to reflect in your account, depending on your payment provider's processing times.
+{% endif %}
+
+We hope to see you again soon!
+Browse our products at: {{ site_url }}{% url 'product_list' %}
+
+If you have any questions about this cancellation or need further assistance, please don't hesitate to contact our customer service team at support@abayaelegance.com.
+
+Thank you for your understanding.
+
+Best regards,
+The Abaya Elegance Team
+
+-------------------
+© {% now "Y" %} Abaya Elegance. All rights reserved.
+123 Fashion Street, Mumbai, Maharashtra, 400001, India

@@ -116,6 +116,139 @@ class Cart(models.Model):
         
         # Format with currency symbol
         return "- " + format_price(discount, selected_currency)
+    
+    # Add these methods to the Cart model in carts/models.py
+
+    def get_total_price_in_currency(self, currency=None):
+        """
+        Get total price in the specified currency.
+        If no currency is provided, it uses the default currency.
+        """
+        from products.models import Currency
+        from core.currency_utils import convert_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            from decimal import Decimal
+            return Decimal('0.00')
+        
+        # Calculate total in default currency
+        total = sum(item.get_total_price() for item in self.items.all())
+        
+        # If no currency specified or same as default, return total
+        if not currency or currency.id == default_currency.id:
+            return total
+        
+        # Convert to specified currency
+        return convert_price(total, default_currency, currency)
+
+    def get_item_prices_in_currency(self, currency=None):
+        """
+        Get a list of cart items with prices converted to the specified currency.
+        Returns a list of dictionaries with item and converted price information.
+        """
+        from products.models import Currency
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            return []
+        
+        # Prepare item list
+        items_with_prices = []
+        
+        for item in self.items.all():
+            # Get price in default currency
+            unit_price = item.product.get_active_price()
+            total_price = unit_price * item.quantity
+            
+            # Convert to specified currency if needed
+            if currency and currency.id != default_currency.id:
+                unit_price_converted = convert_price(unit_price, default_currency, currency)
+                total_price_converted = convert_price(total_price, default_currency, currency)
+            else:
+                unit_price_converted = unit_price
+                total_price_converted = total_price
+            
+            # Format prices
+            currency_to_use = currency or default_currency
+            unit_price_display = format_price(unit_price_converted, currency_to_use)
+            total_price_display = format_price(total_price_converted, currency_to_use)
+            
+            # Add to list
+            items_with_prices.append({
+                'item': item,
+                'unit_price': unit_price_converted,
+                'total_price': total_price_converted,
+                'unit_price_display': unit_price_display,
+                'total_price_display': total_price_display
+            })
+        
+        return items_with_prices
+
+    def get_subtotal_in_currency(self, currency=None):
+        """Get the cart subtotal in the specified currency."""
+        return self.get_total_price_in_currency(currency)
+
+    def get_shipping_in_currency(self, shipping_address=None, currency=None):
+        """
+        Calculate shipping cost in the specified currency.
+        Uses the default shipping calculation and converts the result.
+        """
+        from decimal import Decimal
+        from products.models import Currency
+        from core.currency_utils import convert_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            return Decimal('0.00')
+        
+        # Get cart total in default currency
+        cart_total = self.get_total_price()
+        
+        # Calculate shipping in default currency
+        from orders.views import calculate_shipping
+        shipping_cost = calculate_shipping(cart_total, shipping_address)
+        
+        # Convert to specified currency if needed
+        if currency and currency.id != default_currency.id:
+            shipping_cost = convert_price(shipping_cost, default_currency, currency)
+        
+        return shipping_cost
+
+    def get_tax_in_currency(self, shipping_address=None, currency=None):
+        """
+        Calculate tax in the specified currency.
+        Uses the default tax calculation and converts the result.
+        """
+        from decimal import Decimal
+        from products.models import Currency
+        from core.currency_utils import convert_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            return Decimal('0.00')
+        
+        # Get cart total in default currency
+        cart_total = self.get_total_price()
+        
+        # Calculate tax in default currency
+        from orders.views import calculate_tax
+        tax_amount = calculate_tax(cart_total, shipping_address)
+        
+        # Convert to specified currency if needed
+        if currency and currency.id != default_currency.id:
+            tax_amount = convert_price(tax_amount, default_currency, currency)
+        
+        return tax_amount
 
 
 class CartItem(models.Model):
