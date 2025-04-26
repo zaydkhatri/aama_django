@@ -5,6 +5,8 @@ from . import views
 urlpatterns = [
     # Product pages
     path('', views.product_list, name='product_list'),
+        # Search
+    path('search/', views.search, name='search'),
     path('<slug:slug>/', views.product_detail, name='product_detail'),
     path('<slug:slug>/review/', views.add_review, name='add_review'),
     
@@ -14,8 +16,7 @@ urlpatterns = [
     # Static pages
     path('page/<slug:slug>/', views.page_detail, name='page_detail'),
     
-    # Search
-    path('search/', views.search, name='search'),
+
     
     # API endpoints
     path('api/search/', views.product_search_api, name='product_search_api'),

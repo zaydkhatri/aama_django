@@ -80,7 +80,11 @@
                                     </form>
                                 </td>
                                 <td class="text-center cart-item-total-{{ item.id }}">
-                                    {{ item.get_total_price_display }}
+                                    {% if item.get_total_price_display %}
+                                        {{ item.get_total_price_display }}
+                                    {% else %}
+                                        {{ item.product.get_price_display }}
+                                    {% endif %}
                                 </td>
                                 <td class="text-center">
                                     <form action="{% url 'remove_from_cart' %}" method="post" class="d-inline">
@@ -118,7 +122,13 @@
                     
                     <div class="summary-item">
                         <div class="summary-key">Subtotal</div>
-                        <div class="summary-value cart-subtotal">{{ cart.get_subtotal_display }}</div>
+                        <div class="summary-value cart-subtotal">
+                            {% if cart.get_subtotal_display %}
+                                {{ cart.get_subtotal_display }}
+                            {% else %}
+                                {{ cart.get_total_price }}
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="summary-item">
@@ -128,16 +138,28 @@
                         </div>
                     </div>
                     
-                    {% if cart.discount_amount %}
+                    {% if cart.discount_amount and cart.discount_amount > 0 %}
                     <div class="summary-item">
                         <div class="summary-key">Discount</div>
-                        <div class="summary-value cart-discount text-success">-{{ cart.discount_display }}</div>
+                        <div class="summary-value cart-discount text-success">
+                            {% if cart.discount_display %}
+                                {{ cart.discount_display }}
+                            {% else %}
+                                -{{ cart.discount_amount }}
+                            {% endif %}
+                        </div>
                     </div>
                     {% endif %}
                     
                     <div class="summary-item summary-total">
                         <div class="summary-key">Total</div>
-                        <div class="summary-value cart-total">{{ cart.get_subtotal_display }}</div>
+                        <div class="summary-value cart-total">
+                            {% if cart.get_total_display %}
+                                {{ cart.get_total_display }}
+                            {% else %}
+                                {{ cart.get_total_price }}
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="coupon-section mt-4">
@@ -338,38 +360,76 @@
         </div>
     </div>
 </section>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     $(document).ready(function() {
+        // Flag to prevent multiple simultaneous updates
+        let isUpdating = false;
+        
+        // Track the last update timestamp to prevent rapid clicks
+        let lastUpdateTime = 0;
+        
         // Quantity buttons functionality
-        $('.quantity-btn.minus').on('click', function() {
+        $('.quantity-btn.minus').on('click', function(e) {
+            e.preventDefault(); // Prevent default behavior
+            if (isUpdating) return; // Don't allow if an update is in progress
+            
             var input = $(this).siblings('input');
             var value = parseInt(input.val());
             if (value > 1) {
                 input.val(value - 1);
+                // Mark the input as programmatically changed
+                input.data('programmatic-change', true);
+                // Submit the form directly without triggering change event
                 updateCart($(this).closest('form'));
             }
         });
         
-        $('.quantity-btn.plus').on('click', function() {
+        $('.quantity-btn.plus').on('click', function(e) {
+            e.preventDefault(); // Prevent default behavior
+            if (isUpdating) return; // Don't allow if an update is in progress
+            
             var input = $(this).siblings('input');
             var max = parseInt(input.attr('max'));
             var value = parseInt(input.val());
             if (value < max) {
                 input.val(value + 1);
+                // Mark the input as programmatically changed
+                input.data('programmatic-change', true);
+                // Submit the form directly without triggering change event
                 updateCart($(this).closest('form'));
             }
         });
         
-        // Cart quantity change event
-        $('.cart-quantity').on('change', function() {
+        // Manual input handling - only trigger when the user manually changes the input
+        $('.cart-quantity').on('change', function(e) {
+            // Check if this was triggered programmatically by our buttons
+            if ($(this).data('programmatic-change')) {
+                $(this).data('programmatic-change', false);
+                return; // Don't process the change event
+            }
+            
+            // This is a manual change, so update the cart
             updateCart($(this).closest('form'));
         });
         
-        // Function to update cart
+        // Debounced cart update function
         function updateCart(form) {
+            // Prevent multiple simultaneous updates
+            if (isUpdating) return;
+            
+            // Implement a cooldown period (500ms) to prevent rapid updates
+            const now = Date.now();
+            if (now - lastUpdateTime < 500) return;
+            
+            lastUpdateTime = now;
+            isUpdating = true;
+            
             var url = form.attr('action');
             var data = form.serialize();
             
@@ -378,25 +438,57 @@
                 url: url,
                 data: data,
                 success: function(response) {
+                    isUpdating = false;
+                    
                     if (response.status === 'success') {
                         // Update item total
                         var itemId = form.find('input[name="item_id"]').val();
-                        var total = response.item_total.toFixed(2);
-                        $('.cart-item-total-' + itemId).text('$' + total);
                         
-                        // Update cart total
-                        $('.cart-total').text('$' + response.cart_total.toFixed(2));
+                        if (response.item_total_formatted) {
+                            // Use formatted total if available
+                            $('.cart-item-total-' + itemId).text(response.item_total_formatted);
+                        } else {
+                            // Fallback to raw value
+                            var total = response.item_total.toFixed(2);
+                            $('.cart-item-total-' + itemId).text('$' + total);
+                        }
+                        
+                        // Update cart totals
+                        if (response.cart_subtotal_formatted) {
+                            $('.cart-subtotal').text(response.cart_subtotal_formatted);
+                        }
+                        
+                        if (response.cart_total_formatted) {
+                            $('.cart-total').text(response.cart_total_formatted);
+                        } else {
+                            $('.cart-total').text('$' + response.cart_total.toFixed(2));
+                        }
+                        
+                        // Update cart header count if it exists
+                        if (response.cart_count) {
+                            $('.header-cart-count').text(response.cart_count);
+                        }
                         
                         // Show success message
                         showNotification(response.message, 'success');
+                    } else if (response.status === 'info') {
+                        // Show info message
+                        showNotification(response.message, 'info');
                     } else {
                         // Show error message
                         showNotification(response.message, 'danger');
                     }
                 },
-                error: function() {
-                    // Show error message
-                    showNotification('An error occurred. Please try again.', 'danger');
+                error: function(xhr) {
+                    isUpdating = false;
+                    
+                    // Parse error response if possible
+                    try {
+                        var errorData = JSON.parse(xhr.responseText);
+                        showNotification(errorData.message || 'An error occurred. Please try again.', 'danger');
+                    } catch (e) {
+                        showNotification('An error occurred. Please try again.', 'danger');
+                    }
                 }
             });
         }

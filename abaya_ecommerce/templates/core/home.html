@@ -402,28 +402,77 @@
     </div>
 </section>
 
-<!-- Instagram Feed -->
-<section class="section-padding">
+<!-- Instagram Videos -->
+<section class="section-padding bg-light">
     <div class="container">
         <div class="section-title">
-            <h2>Follow Us on Instagram</h2>
-            <p>@AbayaElegance</p>
+            <h2>Instagram Videos</h2>
+            <p>Watch our latest Instagram videos from @AbayaElegance</p>
         </div>
         
-        <div class="row g-2">
-            <!-- Instagram Images - These would typically come from an Instagram API feed -->
-            {% for i in "12345678" %}
-            <div class="col-lg-3 col-md-4 col-6">
-                <div class="position-relative instagram-item">
-                    <img src="{{ STATIC_URL }}images/instagram-{{ forloop.counter }}.jpg" alt="Instagram Post" class="img-fluid rounded">
-                    <a href="https://instagram.com" target="_blank" class="instagram-overlay">
-                        <div class="d-flex align-items-center justify-content-center h-100">
-                            <i class="fab fa-instagram text-white display-6"></i>
+        <div class="row g-4 instagram-videos-container">
+            {% if instagram_videos %}
+                {% for video in instagram_videos %}
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="instagram-video-item card h-100 border-0 shadow-sm overflow-hidden">
+                            <div class="position-relative">
+                                {% if video.thumbnail_url %}
+                                    <img src="{{ video.thumbnail_url }}" alt="Instagram Video" class="card-img-top instagram-thumbnail">
+                                {% elif video.media_url %}
+                                    <img src="{{ video.media_url }}" alt="Instagram Video" class="card-img-top instagram-thumbnail">
+                                {% else %}
+                                    <div class="instagram-placeholder d-flex align-items-center justify-content-center bg-light" style="height: 300px;">
+                                        <i class="fab fa-instagram fa-3x text-primary"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="instagram-play-button">
+                                    <a href="{{ video.permalink }}" target="_blank" class="btn-play">
+                                        <i class="fas fa-play"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <p class="card-text instagram-caption text-truncate">
+                                    {{ video.caption|default:"Watch on Instagram" }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {{ video.timestamp|date:"F d, Y" }}
+                                    </small>
+                                    <a href="{{ video.permalink }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        View on Instagram
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <div class="instagram-placeholder">
+                        <i class="fab fa-instagram fa-3x text-primary mb-3"></i>
+                        <h4>Instagram Videos Coming Soon!</h4>
+                        <p>Follow us on Instagram @AbayaElegance</p>
+                        <a href="https://instagram.com/AbayaElegance" target="_blank" class="btn btn-primary mt-3">
+                            Follow Us
+                        </a>
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div class="text-center mt-5">
+            {% if instagram_videos %}
+                <button id="load-more-videos" class="btn btn-outline-primary me-3">
+                    <i class="fas fa-plus-circle me-2"></i>Load More Videos
+                </button>
+            {% endif %}
+            
+            <a href="https://instagram.com/AbayaElegance" target="_blank" class="btn btn-primary">
+                <i class="fab fa-instagram me-2"></i>Follow on Instagram
+            </a>
         </div>
     </div>
 </section>

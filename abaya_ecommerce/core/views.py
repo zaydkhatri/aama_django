@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from products.models import Product, Category, Currency
 from .utils import log_activity, get_settings
 from .forms import ContactForm, NewsletterForm
+from .instagram_service import InstagramService  # Add this import
 
 def home(request):
     """Display the home page with featured products, categories, etc."""
@@ -33,6 +34,9 @@ def home(request):
     # Get site settings
     settings = get_settings('site', public_only=True)
     
+    # Get Instagram videos
+    instagram_videos = InstagramService.get_instagram_videos(count=8)
+
     # Log page view
     log_activity(request, 'viewed_home_page')
     
@@ -40,8 +44,52 @@ def home(request):
         'featured_products': featured_products,
         'new_arrivals': new_arrivals,
         'top_categories': top_categories,
-        'settings': settings
+        'settings': settings,
+        'instagram_videos': instagram_videos  # Add this to the context
     })
+
+def get_instagram_videos(request):
+    """API endpoint to fetch Instagram videos."""
+    try:
+        page = int(request.GET.get('page', 1))
+        count = int(request.GET.get('count', 4))
+        
+        # Calculate offset
+        offset = (page - 1) * count
+        
+        # Get Instagram videos
+        from .instagram_service import InstagramService
+        instagram_videos = InstagramService.get_instagram_videos(count=count + offset)
+        
+        # Get just the videos for this page
+        if offset < len(instagram_videos):
+            instagram_videos = instagram_videos[offset:offset + count]
+        else:
+            instagram_videos = []
+        
+        # Format the response
+        videos_data = []
+        for video in instagram_videos:
+            videos_data.append({
+                'id': video.get('id'),
+                'media_url': video.get('media_url'),
+                'thumbnail_url': video.get('thumbnail_url'),
+                'permalink': video.get('permalink'),
+                'caption': video.get('caption', ''),
+                'timestamp': video.get('timestamp')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'videos': videos_data,
+            'has_more': len(videos_data) == count
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
 
 def about(request):
     """Display the about page."""

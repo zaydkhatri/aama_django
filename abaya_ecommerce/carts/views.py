@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 # carts/views.py
 import json
 from django.shortcuts import render, redirect, get_object_or_404
@@ -65,7 +62,19 @@ def cart_detail(request):
     for item in cart.items.all():
         item.product.default_image = item.product.get_default_image()
     
-    return render(request, 'carts/cart_detail.html', {'cart': cart})
+    # Get trending products for recommendations (if available)
+    try:
+        from products.models import Product
+        trending_products = Product.objects.filter(is_active=True).order_by('-views')[:8]
+        for product in trending_products:
+            product.default_image = product.get_default_image()
+    except:
+        trending_products = []
+    
+    return render(request, 'carts/cart_detail.html', {
+        'cart': cart,
+        'trending_products': trending_products
+    })
 
 @require_POST
 def add_to_cart(request):
@@ -129,42 +138,88 @@ def add_to_cart(request):
 
 @require_POST
 def update_cart(request):
-    """Update item quantity in cart."""
-    item_id = request.POST.get('item_id')
-    quantity = int(request.POST.get('quantity', 1))
+    """Update item quantity in cart with improved error handling."""
+    try:
+        item_id = request.POST.get('item_id')
+        quantity = int(request.POST.get('quantity', 1))
+        
+        # Validate quantity
+        if quantity <= 0:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Quantity must be at least 1'
+            }, status=400)
+        
+        # Get cart item based on authentication status
+        if request.user.is_authenticated:
+            cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+            cart = cart_item.cart
+        else:
+            cart = get_or_create_guest_cart(request)
+            cart_item = get_object_or_404(GuestCartItem, id=item_id, cart=cart)
+        
+        # Check stock
+        if cart_item.product.quantity < quantity:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Sorry, we only have {cart_item.product.quantity} in stock'
+            }, status=400)
+        
+        # Don't update if quantity hasn't changed
+        old_quantity = cart_item.quantity
+        if old_quantity == quantity:
+            return JsonResponse({
+                'status': 'info',
+                'message': 'Quantity unchanged',
+                'cart_count': cart.get_item_count(),
+                'item_total': float(cart_item.get_total_price()),
+                'cart_total': float(cart.get_total_price())
+            })
+        
+        # Update quantity and save
+        cart_item.quantity = quantity
+        cart_item.save()
+        
+        # Create response data
+        response_data = {
+            'status': 'success',
+            'message': 'Cart updated successfully',
+            'cart_count': cart.get_item_count(),
+            'item_total': float(cart_item.get_total_price()),
+            'cart_total': float(cart.get_total_price())
+        }
+        
+        # Try to add formatted price displays if methods exist
+        try:
+            if hasattr(cart_item, 'get_total_price_display'):
+                response_data['item_total_formatted'] = cart_item.get_total_price_display()
+            
+            if hasattr(cart, 'get_subtotal_display'):
+                response_data['cart_subtotal_formatted'] = cart.get_subtotal_display()
+            
+            if hasattr(cart, 'get_total_display'):
+                response_data['cart_total_formatted'] = cart.get_total_display()
+        except Exception as price_error:
+            # If formatting fails, log it but continue anyway
+            import logging
+            logging.error(f"Error formatting prices: {price_error}")
+        
+        return JsonResponse(response_data)
     
-    if quantity <= 0:
+    except ValueError as e:
         return JsonResponse({
             'status': 'error',
-            'message': 'Quantity must be at least 1'
+            'message': f'Invalid quantity: {str(e)}'
         }, status=400)
-    
-    if request.user.is_authenticated:
-        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-    else:
-        cart = get_or_create_guest_cart(request)
-        cart_item = get_object_or_404(GuestCartItem, id=item_id, cart=cart)
-    
-    # Check stock
-    if cart_item.product.quantity < quantity:
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        
         return JsonResponse({
             'status': 'error',
-            'message': f'Sorry, we only have {cart_item.product.quantity} in stock'
-        }, status=400)
+            'message': f'An unexpected error occurred: {str(e)}'
+        }, status=500)
     
-    cart_item.quantity = quantity
-    cart_item.save()
-    
-    cart = cart_item.cart
-    
-    return JsonResponse({
-        'status': 'success',
-        'message': 'Cart updated',
-        'cart_count': cart.get_item_count(),
-        'item_total': float(cart_item.get_total_price()),
-        'cart_total': float(cart.get_total_price())
-    })
-
 @require_POST
 def remove_from_cart(request):
     """Remove an item from cart."""
@@ -180,12 +235,23 @@ def remove_from_cart(request):
     cart = cart_item.cart
     cart_item.delete()
     
-    return JsonResponse({
+    # Get formatted total if available
+    try:
+        cart_total_formatted = cart.get_total_display()
+    except:
+        cart_total_formatted = None
+    
+    response_data = {
         'status': 'success',
         'message': f"{product_name} removed from your cart",
         'cart_count': cart.get_item_count(),
         'cart_total': float(cart.get_total_price())
-    })
+    }
+    
+    if cart_total_formatted:
+        response_data['cart_total_formatted'] = cart_total_formatted
+    
+    return JsonResponse(response_data)
 
 @require_POST
 def clear_cart(request):
@@ -208,6 +274,11 @@ def clear_cart(request):
 def wishlist_detail(request):
     """Display the wishlist."""
     wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+    
+    # Add default images to wishlist items
+    for item in wishlist.items.all():
+        item.product.default_image = item.product.get_default_image()
+        
     return render(request, 'carts/wishlist_detail.html', {'wishlist': wishlist})
 
 @login_required

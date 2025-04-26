@@ -103,10 +103,26 @@ class Product(models.Model):
     def get_review_count(self):
         return self.reviews.filter(is_published=True).count()
     
+    # def get_default_image(self):
+    #     default_image = self.media.filter(is_default=True).first()
+    #     return default_image.file if default_image else None
+
     def get_default_image(self):
-        default_image = self.media.filter(is_default=True).first()
-        return default_image.file if default_image else None
-    
+        """Get the default image for this product, with fallback mechanisms."""
+        # Try to get the default image first
+        default_image = self.media.filter(is_default=True, type='IMAGE').first()
+        
+        # If no default image is found, try to get the first image
+        if not default_image:
+            default_image = self.media.filter(type='IMAGE').first()
+        
+        # If we found an image, return the file
+        if default_image and default_image.file:
+            return default_image.file
+        
+        # If no image is found, return None
+        return None
+
     # Use these simplified methods in the Product model
 
     def get_price_display(self, currency=None):

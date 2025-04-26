@@ -45,10 +45,7 @@ def product_list(request):
     products = Product.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
     attributes = Attribute.objects.filter(is_active=True)
-
-    for product in products:
-        product.default_image = product.get_default_image()
-        
+    
     # Filtering
     form = ProductFilterForm(request.GET)
     if form.is_valid():
@@ -76,7 +73,7 @@ def product_list(request):
                 ).distinct()
         
         # Sort options
-        sort_option = form.cleaned_data.get('sort')
+        sort_option = request.GET.get('sort') or form.cleaned_data.get('sort')
         if sort_option == 'price_low':
             products = products.order_by('price')
         elif sort_option == 'price_high':
@@ -106,6 +103,11 @@ def product_list(request):
             results_count=products.count()
         )
     
+    # IMPORTANT: Add default images to all products AFTER all filtering and sorting
+    # This ensures images are available regardless of how products are filtered/sorted
+    for product in products:
+        product.default_image = product.get_default_image()
+    
     # Pagination
     paginator = Paginator(products, 12)  # Show 12 products per page
     page = request.GET.get('page')
@@ -116,12 +118,24 @@ def product_list(request):
     except EmptyPage:
         products = paginator.page(paginator.num_pages)
     
+    # Add default images to the paginated products as well
+    for product in products:
+        if not hasattr(product, 'default_image') or not product.default_image:
+            product.default_image = product.get_default_image()
+    
+    # Get any query parameters for passing to pagination links
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    
     return render(request, 'products/product_list.html', {
         'products': products,
         'categories': categories,
         'attributes': attributes,
         'form': form,
         'query': query,
+        'query_params': query_params.urlencode(),
+        'current_sorting': request.GET.get('sort', '')
     })
 
 # def product_detail(request, slug):
@@ -350,15 +364,21 @@ def page_detail(request, slug):
     return render(request, 'products/page_detail.html', {'page': page})
 
 def search(request):
+    """Display search results for products."""
     query = request.GET.get('q', '')
     
     if query:
+        # Search for products that match the query in name, description, or SKU
         products = Product.objects.filter(
             Q(name__icontains=query) | 
             Q(description__icontains=query) |
             Q(sku__icontains=query) |
             Q(categories__name__icontains=query)
-        ).distinct()
+        ).filter(is_active=True).distinct()
+        
+        # Add default images to search results
+        for product in products:
+            product.default_image = product.get_default_image()
         
         # Log search query
         SearchQuery.objects.create(

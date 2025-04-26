@@ -345,6 +345,11 @@ CELERY_TIMEZONE = TIME_ZONE
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 1 day in seconds
 
+# Add to your settings.py
+# INSTAGRAM_ACCESS_TOKEN = 'your-access-token-here'
+# INSTAGRAM_BUSINESS_ACCOUNT_ID = 'your-instagram-account-id'
+INSTAGRAM_ACCESS_TOKEN = os.getenv('INSTAGRAM_ACCESS_TOKEN', '')
+INSTAGRAM_BUSINESS_ACCOUNT_ID = os.getenv('INSTAGRAM_BUSINESS_ACCOUNT_ID', '')
 # Security settings for production
 if not DEBUG:
     CSRF_COOKIE_SECURE = True

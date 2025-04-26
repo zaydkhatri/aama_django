@@ -541,24 +541,7 @@
         });
         
         // Quantity buttons
-        $('.quantity-btn.minus').on('click', function() {
-            var input = $(this).siblings('input');
-            var value = parseInt(input.val());
-            if (value > 1) {
-                input.val(value - 1);
-                $('#cart-quantity').val(value - 1);
-            }
-        });
         
-        $('.quantity-btn.plus').on('click', function() {
-            var input = $(this).siblings('input');
-            var max = parseInt(input.attr('max'));
-            var value = parseInt(input.val());
-            if (value < max) {
-                input.val(value + 1);
-                $('#cart-quantity').val(value + 1);
-            }
-        });
         
         // Quantity input change
         $('#product-quantity').on('change', function() {

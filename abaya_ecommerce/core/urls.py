@@ -8,4 +8,5 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('currency/change/', views.change_currency, name='change_currency'),
     path('newsletter/signup/', views.newsletter_signup, name='newsletter_signup'),
+    path('api/instagram/videos/', views.get_instagram_videos, name='api_instagram_videos'),
 ]
