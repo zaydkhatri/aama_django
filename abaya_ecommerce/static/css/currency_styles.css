@@ -1,0 +1,23 @@
+/* CSS for currency selector */
+.currency-form {
+    margin: 0;
+    padding: 0;
+}
+
+.currency-form button {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 1.25rem;
+}
+
+.currency-form button:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.currency-form button.active {
+    background-color: var(--primary-color);
+    color: #fff;
+}

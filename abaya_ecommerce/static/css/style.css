@@ -2,12 +2,12 @@
 # General
 --------------------------------------------------------------*/
 :root {
-    --primary-color: #b08c5d;
-    --primary-dark: #8a6d4b;
-    --primary-light: #d6c3a7;
-    --secondary-color: #333333;
+    --primary-color: #A1B8C0;
+    --primary-dark: #071E26;
+    --primary-light: #d8e1e5;
+    --secondary-color: #071E26;
     --light-color: #f8f9fa;
-    --dark-color: #212529;
+    --dark-color: #071E26;
     --gray-color: #6c757d;
     --light-gray: #e9e9e9;
     --success-color: #28a745;
@@ -17,7 +17,7 @@
     --body-font: 'Poppins', sans-serif;
     --heading-font: 'Playfair Display', serif;
     --transition: all 0.3s ease;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow: 0 4px 12px rgba(7, 30, 38, 0.1);
     --border-radius: 4px;
 }
 

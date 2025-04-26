@@ -182,10 +182,12 @@
                             <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
                         </h3>
                         <div class="product-price">
-                            <span class="current-price">₹{{ product.get_active_price }}</span>
-                            {% if product.sale_price %}
-                            <span class="old-price">₹{{ product.price }}</span>
-                            {% endif %}
+                            {% with price_display=product.get_price_display regular_price=product.get_regular_price_display %}
+                                <span class="current-price">{{ price_display }}</span>
+                                {% if product.sale_price %}
+                                <span class="old-price">{{ regular_price }}</span>
+                                {% endif %}
+                            {% endwith %}
                         </div>
                         <div class="product-rating">
                             {% with rating=product.get_rating %}
@@ -266,10 +268,12 @@
                                 <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
                             </h3>
                             <div class="product-price">
-                                <span class="current-price">₹{{ product.get_active_price }}</span>
-                                {% if product.sale_price %}
-                                <span class="old-price">₹{{ product.price }}</span>
-                                {% endif %}
+                                {% with price_display=product.get_price_display regular_price=product.get_regular_price_display %}
+                                    <span class="current-price">{{ price_display }}</span>
+                                    {% if product.sale_price %}
+                                    <span class="old-price">{{ regular_price }}</span>
+                                    {% endif %}
+                                {% endwith %}
                             </div>
                             
                             <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">

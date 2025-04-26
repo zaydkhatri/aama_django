@@ -1,14 +1,10 @@
 from django.contrib import admin
-
-# Register your models here.
-# products/admin.py
-from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
     Category, Product, ProductCategory, ProductMedia, Attribute, 
-    AttributeValue, ProductAttribute, Currency, ProductPrice, Review, 
+    AttributeValue, ProductAttribute, Currency, Review, 
     ReviewImage, SEO, Page
 )
 
@@ -48,18 +44,13 @@ class ProductAttributeInline(admin.TabularInline):
     extra = 1
     fields = ('attribute', 'attribute_value')
 
-class ProductPriceInline(admin.TabularInline):
-    model = ProductPrice
-    extra = 1
-    fields = ('currency', 'price', 'sale_price')
-
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'sku', 'price', 'sale_price', 'quantity', 'is_active', 'is_featured', 'created_at')
     list_filter = ('is_active', 'is_featured', 'created_at')
     search_fields = ('name', 'slug', 'sku', 'description')
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ('created_at', 'updated_at')
-    inlines = [ProductMediaInline, ProductCategoryInline, ProductAttributeInline, ProductPriceInline]
+    inlines = [ProductMediaInline, ProductCategoryInline, ProductAttributeInline]
     fieldsets = (
         (None, {
             'fields': ('name', 'slug', 'description', 'sku', 'price', 'sale_price', 'cost', 'quantity')

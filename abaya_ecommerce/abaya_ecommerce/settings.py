@@ -179,6 +179,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Add this line
+    'core.middleware.RequestMiddleware',  # Add this line
 ]
 
 ROOT_URLCONF = 'abaya_ecommerce.urls'
@@ -195,6 +196,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'carts.context_processors.cart',  # Custom cart context processor
+                'core.context_processors.currency_processor',  # Add this line
             ],
         },
     },

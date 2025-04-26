@@ -121,6 +121,285 @@ class OrderItem(models.Model):
         # Update order totals
         self.order.update_totals()
 
+        # Add these methods to the OrderItem model in orders/models.py
+
+    def get_unit_price_display(self):
+        """Get the formatted unit price with currency symbol."""
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        price = self.unit_price
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            price = convert_price(price, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return format_price(price, selected_currency)
+
+    def get_total_display(self):
+        """Get the formatted total price with currency symbol."""
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        total = self.total
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            total = convert_price(total, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return format_price(total, selected_currency)
+
+    # Add these methods to the Order model in orders/models.py
+
+    def get_subtotal_display(self):
+        """Get the formatted subtotal with currency symbol."""
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        subtotal = self.subtotal
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            subtotal = convert_price(subtotal, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return format_price(subtotal, selected_currency)
+
+    def get_shipping_display(self):
+        """Get the formatted shipping cost with currency symbol."""
+        if not self.shipping_cost:
+            return "Free"
+            
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        shipping = self.shipping_cost
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            shipping = convert_price(shipping, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return format_price(shipping, selected_currency)
+
+    def get_tax_display(self):
+        """Get the formatted tax amount with currency symbol."""
+        if not self.tax:
+            return "-"
+            
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        tax = self.tax
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            tax = convert_price(tax, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return format_price(tax, selected_currency)
+
+    def get_discount_display(self):
+        """Get the formatted discount amount with currency symbol."""
+        if not self.discount:
+            return "-"
+            
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        discount = self.discount
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            discount = convert_price(discount, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return "- " + format_price(discount, selected_currency)
+
+    def get_total_display(self):
+        """Get the formatted total amount with currency symbol."""
+        # Get the default currency and the selected currency
+        from products.models import Currency
+        from core.middleware import get_current_request
+        from core.currency_utils import convert_price, format_price
+        
+        # Get default currency
+        try:
+            default_currency = Currency.objects.get(is_default=True)
+        except Currency.DoesNotExist:
+            default_currency = None
+        
+        # Try to get the selected currency
+        selected_currency = None
+        try:
+            request = get_current_request()
+            if request and request.session.get('currency_code'):
+                try:
+                    selected_currency = Currency.objects.get(
+                        code=request.session['currency_code'],
+                        is_active=True
+                    )
+                except Currency.DoesNotExist:
+                    selected_currency = default_currency
+            else:
+                selected_currency = default_currency
+        except:
+            selected_currency = default_currency
+        
+        # Convert price if needed
+        total = self.total
+        if default_currency and selected_currency and default_currency.id != selected_currency.id:
+            total = convert_price(total, default_currency, selected_currency)
+        
+        # Format with currency symbol
+        return format_price(total, selected_currency)
+
 
 class OrderStatusLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
 
-from products.models import Product, Category
+from products.models import Product, Category, Currency
 from .utils import log_activity, get_settings
 from .forms import ContactForm, NewsletterForm
 
@@ -182,3 +182,21 @@ def error_403(request, exception):
 def error_400(request, exception):
     """Handle 400 errors."""
     return render(request, 'core/errors/400.html', status=400)
+
+def change_currency(request):
+    """
+    Change the currency and redirect back to the previous page.
+    """
+    if request.method == 'POST':
+        currency_code = request.POST.get('currency_code')
+        if currency_code:
+            # Check if the currency exists and is active
+            try:
+                currency = Currency.objects.get(code=currency_code, is_active=True)
+                request.session['currency_code'] = currency_code
+            except Currency.DoesNotExist:
+                pass
+    
+    # Redirect back to the referring page
+    next_page = request.POST.get('next') or request.META.get('HTTP_REFERER', '/')
+    return redirect(next_page)

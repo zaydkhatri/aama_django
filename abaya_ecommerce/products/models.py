@@ -106,6 +106,53 @@ class Product(models.Model):
     def get_default_image(self):
         default_image = self.media.filter(is_default=True).first()
         return default_image.file if default_image else None
+    
+    # Use these simplified methods in the Product model
+
+    def get_price_display(self, currency=None):
+        """
+        Get formatted display price with currency symbol.
+        Uses the current price if sale_price is not available.
+        """
+        from core.currency_utils import convert_price, format_price, get_selected_currency_from_request
+        
+        # Get default currency and selected currency
+        default_currency = Currency.objects.get(is_default=True)
+        
+        # If no currency provided, use selected currency
+        if currency is None:
+            currency = get_selected_currency_from_request()
+        
+        # Determine which price to use (sale price or regular price)
+        price = self.sale_price if self.sale_price else self.price
+        
+        # Convert price if needed
+        if default_currency and currency and default_currency.id != currency.id:
+            price = convert_price(price, default_currency, currency)
+        
+        # Format with currency symbol and return
+        return format_price(price, currency)
+
+    def get_regular_price_display(self, currency=None):
+        """
+        Get formatted regular price with currency symbol.
+        """
+        from core.currency_utils import convert_price, format_price, get_selected_currency_from_request
+        
+        # Get default currency and selected currency
+        default_currency = Currency.objects.get(is_default=True)
+        
+        # If no currency provided, use selected currency
+        if currency is None:
+            currency = get_selected_currency_from_request()
+        
+        # Convert price if needed
+        price = self.price
+        if default_currency and currency and default_currency.id != currency.id:
+            price = convert_price(price, default_currency, currency)
+        
+        # Format with currency symbol and return
+        return format_price(price, currency)
 
 
 class ProductCategory(models.Model):
@@ -253,24 +300,6 @@ class Currency(models.Model):
             Currency.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
         
         super().save(*args, **kwargs)
-
-
-class ProductPrice(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='price_currencies')
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    sale_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = 'Product Price'
-        verbose_name_plural = 'Product Prices'
-        unique_together = ('product', 'currency')
-    
-    def __str__(self):
-        return f"{self.product.name} - {self.currency.code}: {self.price}"
 
 
 class Review(models.Model):

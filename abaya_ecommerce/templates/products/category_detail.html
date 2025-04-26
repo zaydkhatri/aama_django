@@ -138,9 +138,9 @@
                                     <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
                                 </h3>
                                 <div class="product-price">
-                                    <span class="current-price">₹{{ product.get_active_price }}</span>
+                                    <span class="current-price">{{ product.get_price_display selected_currency }}</span>
                                     {% if product.sale_price %}
-                                    <span class="old-price">₹{{ product.price }}</span>
+                                    <span class="old-price">{{ product.get_regular_price_display selected_currency }}</span>
                                     {% endif %}
                                 </div>
                                 

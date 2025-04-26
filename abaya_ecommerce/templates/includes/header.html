@@ -11,15 +11,27 @@
                 </div>
                 <div class="col-lg-6 col-md-12">
                     <ul class="list-inline mb-0 text-lg-end text-center">
+                        <!-- Replace the currency dropdown section in header.html with this code -->
+
                         <li class="list-inline-item me-3">
                             <div class="dropdown">
                                 <a class="text-white dropdown-toggle" href="#" role="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-rupee-sign me-1"></i> INR
+                                    <i class="fas fa-money-bill me-1"></i> {{ selected_currency.code }}
                                 </a>
-                                <ul class="dropdown-menu" aria-labelledby="currencyDropdown">
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-rupee-sign me-1"></i> INR</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-dollar-sign me-1"></i> USD</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-pound-sign me-1"></i> GBP</a></li>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
+                                    {% for currency in currencies %}
+                                    <li>
+                                        <form method="post" action="{% url 'change_currency' %}" class="currency-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="currency_code" value="{{ currency.code }}">
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                            <button type="submit" class="dropdown-item {% if selected_currency.code == currency.code %}active{% endif %}">
+                                                <i class="fas {% if currency.code == 'USD' %}fa-dollar-sign{% elif currency.code == 'EUR' %}fa-euro-sign{% elif currency.code == 'GBP' %}fa-pound-sign{% elif currency.code == 'INR' %}fa-rupee-sign{% else %}fa-money-bill{% endif %} me-1"></i>
+                                                {{ currency.code }} - {{ currency.name }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endfor %}
                                 </ul>
                             </div>
                         </li>
