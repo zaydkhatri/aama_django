@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------
 # General
 --------------------------------------------------------------*/
-:root {
+/* :root {
     --primary-color: #A1B8C0;
     --primary-dark: #071E26;
     --primary-light: #d8e1e5;
@@ -18,6 +18,37 @@
     --heading-font: 'Playfair Display', serif;
     --transition: all 0.3s ease;
     --shadow: 0 4px 12px rgba(7, 30, 38, 0.1);
+    --border-radius: 4px;
+} */
+
+:root {
+    --primary-color: #617B84;
+    --primary-dark: #3F5059;
+    /* Darker shade of primary color */
+    --primary-light: #B5C5CB;
+    /* Lighter shade of primary color */
+    --secondary-color: #000;
+    --light-color: #f8f9fa;
+    /* This is fine as is */
+    --dark-color: #212529;
+    /* Better contrast with new primary */
+    --gray-color: #6c757d;
+    /* This works well */
+    --light-gray: #e9e9e9;
+    /* This works well */
+    --success-color: #28a745;
+    /* Standard colors - fine as is */
+    --info-color: #17a2b8;
+    /* Standard colors - fine as is */
+    --warning-color: #ffc107;
+    /* Standard colors - fine as is */
+    --danger-color: #dc3545;
+    /* Standard colors - fine as is */
+    --body-font: 'Poppins', sans-serif;
+    --heading-font: 'Playfair Display', serif;
+    --transition: all 0.3s ease;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Slightly more pronounced shadow */
     --border-radius: 4px;
 }
 

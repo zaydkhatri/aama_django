@@ -6,6 +6,52 @@
 {% block meta_description %}{{ product.meta_description|default:product.description|truncatewords:20 }}{% endblock %}
 {% block meta_keywords %}{{ product.meta_keywords|default:product.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Video thumbnail styling */
+    .product-gallery-thumb[data-media-type="video"] {
+        position: relative;
+    }
+
+    .product-gallery-thumb[data-media-type="video"]:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: var(--border-radius);
+    }
+
+    .product-gallery-thumb .video-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        color: white;
+        z-index: 2;
+    }
+
+    /* Properly size the video in the main container */
+    #main-media-container video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        max-height: 500px;
+    }
+
+    /* Make active thumbnail more visible */
+    .product-gallery-thumb.active {
+        border: 2px solid var(--primary-color);
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Breadcrumb -->
 <div class="breadcrumb-section">
@@ -35,19 +81,32 @@
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <div class="product-gallery">
                     <div class="product-gallery-main">
-                        {% if product.default_image %}
-                        <img src="{{ product.default_image.url }}" alt="{{ product.name }}" id="main-product-image">
-                        {% else %}
-                        <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}" id="main-product-image">
-                        {% endif %}
+                        <div id="main-media-container">
+                            {% if product.default_image %}
+                            <img src="{{ product.default_image.url }}" alt="{{ product.name }}" id="main-product-image">
+                            {% else %}
+                            <img src="{% static 'images/product-placeholder.jpg' %}" alt="{{ product.name }}" id="main-product-image">
+                            {% endif %}
+                        </div>
                     </div>
                     
-                    {% if product.all_images %}
+                    {% if product.all_media %}
                     <div class="product-gallery-thumbs">
-                        {% for image in product.all_images %}
-                        <div class="product-gallery-thumb {% if forloop.first %}active{% endif %}" data-image="{{ image.file.url }}">
-                            <img src="{{ image.file.url }}" alt="{{ product.name }} - Image {{ forloop.counter }}">
-                        </div>
+                        {% for media in product.all_media %}
+                            {% if media.type == 'IMAGE' %}
+                            <div class="product-gallery-thumb {% if forloop.first %}active{% endif %}" 
+                                 data-media-type="image"
+                                 data-src="{{ media.file.url }}">
+                                <img src="{{ media.file.url }}" alt="{{ product.name }} - Image {{ forloop.counter }}">
+                            </div>
+                            {% elif media.type == 'VIDEO' %}
+                            <div class="product-gallery-thumb" 
+                                 data-media-type="video"
+                                 data-src="{{ media.file.url }}">
+                                <img src="{% static 'images/video-thumbnail.jpg'|default:media.file.url %}" alt="{{ product.name }} - Video {{ forloop.counter }}">
+                                <i class="fas fa-play-circle video-icon"></i>
+                            </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                     {% endif %}
@@ -97,10 +156,10 @@
                     </div>
                     
                     <div class="product-detail-price mb-4">
-                        {% with price_display=product.get_price_display regular_price=product.get_regular_price_display %}
+                        {% with price_display=product.get_price_display %}
                             <span class="product-detail-current-price">{{ price_display }}</span>
                             {% if product.sale_price %}
-                            <span class="product-detail-old-price">{{ regular_price }}</span>
+                            <span class="product-detail-old-price">{{ product.get_regular_price_display }}</span>
                             {% endif %}
                         {% endwith %}
                     </div>
@@ -291,7 +350,19 @@
                                         <div>{{ review_stats.rating_5 }} reviews</div>
                                     </div>
                                     <div class="progress">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ review_stats.rating_5|divisibleby:review_stats.count|default:0|floatformat:2 }}%" aria-valuenow="{{ review_stats.rating_5 }}" aria-valuemin="0" aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% if review_stats.count > 0 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: {% widthratio review_stats.rating_5 review_stats.count 100 %}%" 
+                                            aria-valuenow="{{ review_stats.rating_5 }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% else %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: 0%" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"></div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 
@@ -301,7 +372,19 @@
                                         <div>{{ review_stats.rating_4 }} reviews</div>
                                     </div>
                                     <div class="progress">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ review_stats.rating_4|divisibleby:review_stats.count|default:0|floatformat:2 }}%" aria-valuenow="{{ review_stats.rating_4 }}" aria-valuemin="0" aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% if review_stats.count > 0 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: {% widthratio review_stats.rating_4 review_stats.count 100 %}%" 
+                                            aria-valuenow="{{ review_stats.rating_4 }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% else %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: 0%" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"></div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 
@@ -311,7 +394,19 @@
                                         <div>{{ review_stats.rating_3 }} reviews</div>
                                     </div>
                                     <div class="progress">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ review_stats.rating_3|divisibleby:review_stats.count|default:0|floatformat:2 }}%" aria-valuenow="{{ review_stats.rating_3 }}" aria-valuemin="0" aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% if review_stats.count > 0 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: {% widthratio review_stats.rating_3 review_stats.count 100 %}%" 
+                                            aria-valuenow="{{ review_stats.rating_3 }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% else %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: 0%" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"></div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 
@@ -321,7 +416,19 @@
                                         <div>{{ review_stats.rating_2 }} reviews</div>
                                     </div>
                                     <div class="progress">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ review_stats.rating_2|divisibleby:review_stats.count|default:0|floatformat:2 }}%" aria-valuenow="{{ review_stats.rating_2 }}" aria-valuemin="0" aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% if review_stats.count > 0 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: {% widthratio review_stats.rating_2 review_stats.count 100 %}%" 
+                                            aria-valuenow="{{ review_stats.rating_2 }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% else %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: 0%" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"></div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 
@@ -331,7 +438,19 @@
                                         <div>{{ review_stats.rating_1 }} reviews</div>
                                     </div>
                                     <div class="progress">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ review_stats.rating_1|divisibleby:review_stats.count|default:0|floatformat:2 }}%" aria-valuenow="{{ review_stats.rating_1 }}" aria-valuemin="0" aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% if review_stats.count > 0 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: {% widthratio review_stats.rating_1 review_stats.count 100 %}%" 
+                                            aria-valuenow="{{ review_stats.rating_1 }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="{{ review_stats.count }}"></div>
+                                        {% else %}
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                            style="width: 0%" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"></div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -491,10 +610,10 @@
                             <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
                         </h3>
                         <div class="product-price">
-                            {% with price_display=product.get_price_display regular_price=product.get_regular_price_display %}
+                            {% with price_display=product.get_price_display %}
                                 <span class="current-price">{{ price_display }}</span>
                                 {% if product.sale_price %}
-                                <span class="old-price">{{ regular_price }}</span>
+                                <span class="old-price">{{ product.get_regular_price_display }}</span>
                                 {% endif %}
                             {% endwith %}
                         </div>
@@ -522,10 +641,29 @@
     $(document).ready(function() {
         // Product gallery thumbnail click
         $('.product-gallery-thumb').on('click', function() {
-            var imgSrc = $(this).data('image');
-            $('#main-product-image').attr('src', imgSrc);
+            var mediaType = $(this).data('media-type');
+            var mediaSrc = $(this).data('src');
+            var mainContainer = $('#main-media-container');
+            
+            // Remove active class from all thumbnails and add to the clicked one
             $('.product-gallery-thumb').removeClass('active');
             $(this).addClass('active');
+            
+            // Clear the container
+            mainContainer.empty();
+            
+            // Add the appropriate content based on media type
+            if (mediaType === 'image' || !mediaType) {
+                // Add image
+                mainContainer.html('<img src="' + mediaSrc + '" alt="Product Image" id="main-product-image">');
+            } else if (mediaType === 'video') {
+                // Add video player
+                var videoHtml = '<video controls class="w-100" style="max-height: 500px;">' +
+                               '<source src="' + mediaSrc + '" type="video/mp4">' +
+                               'Your browser does not support the video tag.' +
+                               '</video>';
+                mainContainer.html(videoHtml);
+            }
         });
         
         // Size options click
@@ -541,7 +679,24 @@
         });
         
         // Quantity buttons
+        $('.quantity-btn.plus').on('click', function() {
+            var input = $(this).siblings('input');
+            var value = parseInt(input.val());
+            var max = parseInt(input.attr('max'));
+            if (value < max) {
+                input.val(value + 1);
+                $('#cart-quantity').val(value + 1);
+            }
+        });
         
+        $('.quantity-btn.minus').on('click', function() {
+            var input = $(this).siblings('input');
+            var value = parseInt(input.val());
+            if (value > 1) {
+                input.val(value - 1);
+                $('#cart-quantity').val(value - 1);
+            }
+        });
         
         // Quantity input change
         $('#product-quantity').on('change', function() {
