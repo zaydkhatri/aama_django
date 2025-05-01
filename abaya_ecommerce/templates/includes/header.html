@@ -5,8 +5,8 @@
             <div class="row align-items-center">
                 <div class="col-lg-6 d-md-flex d-none">
                     <div class="top-contact">
-                        <span class="me-3"><i class="fas fa-envelope me-1"></i> support@abayaelegance.com</span>
-                        <span><i class="fas fa-phone me-1"></i> +91 1234567890</span>
+                        <span class="me-3"><i class="fas fa-envelope me-1"></i> aamafashion@gmail.com</span>
+                        <span><i class="fas fa-phone me-1"></i> +91 9537359510</span>
                     </div>
                 </div>
                 <div class="col-lg-6 col-md-12">
@@ -15,7 +15,8 @@
 
                         <li class="list-inline-item me-3">
                             <div class="dropdown">
-                                <a class="text-white dropdown-toggle" href="#" role="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="text-white dropdown-toggle" href="#" role="button" id="currencyDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-money-bill me-1"></i> {{ selected_currency.code }}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
@@ -25,8 +26,10 @@
                                             {% csrf_token %}
                                             <input type="hidden" name="currency_code" value="{{ currency.code }}">
                                             <input type="hidden" name="next" value="{{ request.path }}">
-                                            <button type="submit" class="dropdown-item {% if selected_currency.code == currency.code %}active{% endif %}">
-                                                <i class="fas {% if currency.code == 'USD' %}fa-dollar-sign{% elif currency.code == 'EUR' %}fa-euro-sign{% elif currency.code == 'GBP' %}fa-pound-sign{% elif currency.code == 'INR' %}fa-rupee-sign{% else %}fa-money-bill{% endif %} me-1"></i>
+                                            <button type="submit"
+                                                class="dropdown-item {% if selected_currency.code == currency.code %}active{% endif %}">
+                                                <i
+                                                    class="fas {% if currency.code == 'USD' %}fa-dollar-sign{% elif currency.code == 'EUR' %}fa-euro-sign{% elif currency.code == 'GBP' %}fa-pound-sign{% elif currency.code == 'INR' %}fa-rupee-sign{% else %}fa-money-bill{% endif %} me-1"></i>
                                                 {{ currency.code }} - {{ currency.name }}
                                             </button>
                                         </form>
@@ -37,7 +40,8 @@
                         </li>
                         <li class="list-inline-item">
                             <div class="dropdown">
-                                <a class="text-white dropdown-toggle" href="#" role="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="text-white dropdown-toggle" href="#" role="button" id="languageDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-globe me-1"></i> English
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="languageDropdown">
@@ -57,9 +61,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
-                Abaya<span>Elegance</span>
+                Aama<span>Abaya</span>
             </a>
-            
+
             <div class="d-flex d-lg-none ms-auto me-2">
                 <div class="header-icons">
                     <a href="{% url 'wishlist_detail' %}" class="header-icon me-3 position-relative">
@@ -76,28 +80,36 @@
                     </a>
                 </div>
             </div>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="{% url 'home' %}">Home</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="shopDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="shopDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             Shop
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="shopDropdown">
                             <li><a class="dropdown-item" href="{% url 'product_list' %}">All Products</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Categories</h6></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header">Categories</h6>
+                            </li>
                             {% for category in categories|slice:":5" %}
-                            <li><a class="dropdown-item" href="{% url 'category_detail' category.slug %}">{{ category.name }}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'category_detail' category.slug %}">
+                                    {{ category.name }}</a></li>
                             {% endfor %}
-                            <li><a class="dropdown-item text-primary" href="{% url 'product_list' %}">View All Categories</a></li>
+                            <li><a class="dropdown-item text-primary" href="{% url 'product_list' %}">View All
+                                    Categories</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -107,29 +119,39 @@
                         <a class="nav-link" href="{% url 'contact' %}">Contact</a>
                     </li>
                 </ul>
-                
+
                 <form action="{% url 'search' %}" method="GET" class="search-form d-none d-lg-flex mb-3 mb-lg-0">
                     <div class="input-group">
-                        <input type="text" name="q" class="form-control" placeholder="Search products..." value="{{ request.GET.q|default:'' }}">
+                        <input type="text" name="q" class="form-control" placeholder="Search products..."
+                            value="{{ request.GET.q|default:'' }}">
                         <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
                     </div>
                 </form>
-                
+
                 <div class="d-none d-lg-flex header-icons ms-lg-3">
                     <div class="dropdown me-3">
-                        <a href="#" class="header-icon" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="header-icon" id="accountDropdown" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="far fa-user"></i>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
                             {% if user.is_authenticated %}
-                            <li><a class="dropdown-item" href="{% url 'account_dashboard' %}"><i class="fas fa-user-circle me-2"></i> My Account</a></li>
-                            <li><a class="dropdown-item" href="{% url 'order_history' %}"><i class="fas fa-shopping-bag me-2"></i> My Orders</a></li>
-                            <li><a class="dropdown-item" href="{% url 'wishlist_detail' %}"><i class="far fa-heart me-2"></i> My Wishlist</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                            <li><a class="dropdown-item" href="{% url 'account_dashboard' %}"><i
+                                        class="fas fa-user-circle me-2"></i> My Account</a></li>
+                            <li><a class="dropdown-item" href="{% url 'order_history' %}"><i
+                                        class="fas fa-shopping-bag me-2"></i> My Orders</a></li>
+                            <li><a class="dropdown-item" href="{% url 'wishlist_detail' %}"><i
+                                        class="far fa-heart me-2"></i> My Wishlist</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i
+                                        class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                             {% else %}
-                            <li><a class="dropdown-item" href="{% url 'login' %}"><i class="fas fa-sign-in-alt me-2"></i> Login</a></li>
-                            <li><a class="dropdown-item" href="{% url 'register' %}"><i class="fas fa-user-plus me-2"></i> Register</a></li>
+                            <li><a class="dropdown-item" href="{% url 'login' %}"><i
+                                        class="fas fa-sign-in-alt me-2"></i> Login</a></li>
+                            <li><a class="dropdown-item" href="{% url 'register' %}"><i
+                                        class="fas fa-user-plus me-2"></i> Register</a></li>
                             {% endif %}
                         </ul>
                     </div>
