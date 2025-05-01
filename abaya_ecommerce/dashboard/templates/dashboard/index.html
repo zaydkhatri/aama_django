@@ -1,0 +1,479 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | Abaya Elegance{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Overview</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Stats Overview -->
+    <div class="row stats-row">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-card-icon bg-primary">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h5 class="stat-card-title">Total Orders</h5>
+                        <p class="stat-card-value">{{ total_orders }}</p>
+                        <div class="stat-card-change">
+                            <span class="change-percentage {% if orders_month > orders_week %}text-success{% else %}text-danger{% endif %}">
+                                {{ orders_month|default:"0" }} this month
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-card-icon bg-success">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h5 class="stat-card-title">Total Revenue</h5>
+                        <p class="stat-card-value">{{ total_revenue|floatformat:2 }}</p>
+                        <div class="stat-card-change">
+                            <span class="change-percentage {% if revenue_month > revenue_week %}text-success{% else %}text-danger{% endif %}">
+                                {{ revenue_month|floatformat:2 }} this month
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-card-icon bg-warning">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h5 class="stat-card-title">Products</h5>
+                        <p class="stat-card-value">{{ total_products }}</p>
+                        <div class="stat-card-change">
+                            <span class="change-percentage text-success">
+                                {{ active_products }} active
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-card-body">
+                    <div class="stat-card-icon bg-info">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h5 class="stat-card-title">Customers</h5>
+                        <p class="stat-card-value">{{ total_users }}</p>
+                        <div class="stat-card-change">
+                            <span class="change-percentage text-success">
+                                {{ new_users_month }} new this month
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div class="row mt-4">
+        <!-- Sales & Orders Chart -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Sales & Orders</h5>
+                    <div class="card-actions">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" id="weekly-chart-btn">Weekly</button>
+                            <button type="button" class="btn btn-outline-secondary" id="monthly-chart-btn">Monthly</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesOrdersChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Status Chart -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Order Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="orderStatusChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- More Analytics -->
+    <div class="row">
+        <!-- Top Selling Products -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Top Selling Products</h5>
+                    <div class="card-actions">
+                        <a href="{% url 'dashboard:product_report' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_selling_products %}
+                                <tr>
+                                    <td>{{ product.product__name }}</td>
+                                    <td>{{ product.quantity_sold }}</td>
+                                    <td>{{ product.revenue|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Orders</h5>
+                    <div class="card-actions">
+                        <a href="{% url 'dashboard:order_list' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td><a href="{% url 'dashboard:order_detail' pk=order.id %}">{{ order.order_number }}</a></td>
+                                    <td>{{ order.user.name }}</td>
+                                    <td>
+                                        {% if order.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% elif order.status == 'PROCESSING' %}
+                                        <span class="badge bg-info">Processing</span>
+                                        {% elif order.status == 'SHIPPED' %}
+                                        <span class="badge bg-primary">Shipped</span>
+                                        {% elif order.status == 'DELIVERED' %}
+                                        <span class="badge bg-success">Delivered</span>
+                                        {% elif order.status == 'CANCELLED' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.total|floatformat:2 }}</td>
+                                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No orders available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activities -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Activities</h5>
+                    <div class="card-actions">
+                        <a href="{% url 'dashboard:activities' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>{{ activity.user.name }}</td>
+                                    <td>{{ activity.action }}</td>
+                                    <td>{{ activity.entity_type }} {% if activity.entity_id %}#{{ activity.entity_id }}{% endif %}</td>
+                                    <td>{{ activity.created_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No activities available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Chart JS Configuration
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart color palette
+        const chartColors = {
+            primary: '#4e73df',
+            success: '#1cc88a',
+            info: '#36b9cc',
+            warning: '#f6c23e',
+            danger: '#e74a3b',
+            secondary: '#858796',
+            light: '#f8f9fc',
+            dark: '#5a5c69'
+        };
+        
+        // Sales & Orders Chart
+        const salesOrdersCtx = document.getElementById('salesOrdersChart').getContext('2d');
+        let salesOrdersChart = new Chart(salesOrdersCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [
+                    {
+                        label: 'Sales (₹)',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        borderColor: chartColors.primary,
+                        pointBackgroundColor: chartColors.primary,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: chartColors.primary,
+                        data: [{{ revenue_month|floatformat:0|default:"0" }}, {{ revenue_month|floatformat:0|default:"0" }}, {{ revenue_month|floatformat:0|default:"0" }}, {{ revenue_month|floatformat:0|default:"0" }}, {{ revenue_month|floatformat:0|default:"0" }}, {{ revenue_month|floatformat:0|default:"0" }}],
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Orders',
+                        backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                        borderColor: chartColors.success,
+                        pointBackgroundColor: chartColors.success,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: chartColors.success,
+                        data: [{{ orders_month|default:"0" }}, {{ orders_month|default:"0" }}, {{ orders_month|default:"0" }}, {{ orders_month|default:"0" }}, {{ orders_month|default:"0" }}, {{ orders_month|default:"0" }}],
+                        borderWidth: 2,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.datasetIndex === 0) {
+                                        label += new Intl.NumberFormat('en-IN', { 
+                                            style: 'currency', 
+                                            currency: 'INR',
+                                            minimumFractionDigits: 0
+                                        }).format(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y;
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Order Status Chart
+        const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+        const orderStatusChart = new Chart(orderStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+                datasets: [
+                    {
+                        data: [
+                            {{ order_status_counts.0.count|default:"0" }}, 
+                            {{ order_status_counts.1.count|default:"0" }}, 
+                            {{ order_status_counts.2.count|default:"0" }}, 
+                            {{ order_status_counts.3.count|default:"0" }}, 
+                            {{ order_status_counts.4.count|default:"0" }}
+                        ],
+                        backgroundColor: [
+                            chartColors.warning,
+                            chartColors.info,
+                            chartColors.primary,
+                            chartColors.success,
+                            chartColors.danger
+                        ],
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Toggle between weekly and monthly data
+        document.getElementById('weekly-chart-btn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('monthly-chart-btn').classList.remove('active');
+            
+            // Update chart with weekly data (this would typically fetch data via AJAX)
+            // For this example, we'll just update with the current week's data
+            salesOrdersChart.data.datasets[0].data = [
+                {{ revenue_week|floatformat:0|default:"0" }}, 
+                {{ revenue_week|floatformat:0|default:"0" }}, 
+                {{ revenue_week|floatformat:0|default:"0" }}, 
+                {{ revenue_week|floatformat:0|default:"0" }}, 
+                {{ revenue_week|floatformat:0|default:"0" }}, 
+                {{ revenue_week|floatformat:0|default:"0" }}
+            ];
+            salesOrdersChart.data.datasets[1].data = [
+                {{ orders_week|default:"0" }}, 
+                {{ orders_week|default:"0" }}, 
+                {{ orders_week|default:"0" }}, 
+                {{ orders_week|default:"0" }}, 
+                {{ orders_week|default:"0" }}, 
+                {{ orders_week|default:"0" }}
+            ];
+            salesOrdersChart.data.labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            salesOrdersChart.update();
+        });
+        
+        document.getElementById('monthly-chart-btn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('weekly-chart-btn').classList.remove('active');
+            
+            // Update chart with monthly data (this would typically fetch data via AJAX)
+            // For this example, we'll just update with the current month's data
+            salesOrdersChart.data.datasets[0].data = [
+                {{ revenue_month|floatformat:0|default:"0" }}, 
+                {{ revenue_month|floatformat:0|default:"0" }}, 
+                {{ revenue_month|floatformat:0|default:"0" }}, 
+                {{ revenue_month|floatformat:0|default:"0" }}, 
+                {{ revenue_month|floatformat:0|default:"0" }}, 
+                {{ revenue_month|floatformat:0|default:"0" }}
+            ];
+            salesOrdersChart.data.datasets[1].data = [
+                {{ orders_month|default:"0" }}, 
+                {{ orders_month|default:"0" }}, 
+                {{ orders_month|default:"0" }}, 
+                {{ orders_month|default:"0" }}, 
+                {{ orders_month|default:"0" }}, 
+                {{ orders_month|default:"0" }}
+            ];
+            salesOrdersChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            salesOrdersChart.update();
+        });
+        
+        // Fetch real chart data via AJAX (in a real application)
+        function fetchChartData() {
+            // Example of how to fetch data from your API endpoint
+            /*
+            fetch('/dashboard/api/orders/chart/')
+                .then(response => response.json())
+                .then(data => {
+                    // Update your charts with the returned data
+                    salesOrdersChart.data.labels = data.time_series.labels;
+                    salesOrdersChart.data.datasets[0].data = data.time_series.order_totals;
+                    salesOrdersChart.data.datasets[1].data = data.time_series.order_counts;
+                    salesOrdersChart.update();
+                    
+                    orderStatusChart.data.labels = data.status_breakdown.labels;
+                    orderStatusChart.data.datasets[0].data = data.status_breakdown.counts;
+                    orderStatusChart.update();
+                })
+                .catch(error => console.error('Error fetching chart data:', error));
+            */
+        }
+        
+        // Uncomment to enable real data fetching
+        // fetchChartData();
+    });
+</script>
+{% endblock %}

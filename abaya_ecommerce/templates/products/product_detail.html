@@ -57,15 +57,9 @@
             <!-- Product Details -->
             <div class="col-lg-6">
                 <div class="product-detail-content">
-                    {% if product.is_in_stock %}
                     {% if product.sale_price %}
                     <div class="product-badges mb-3">
                         <span class="badge bg-danger">{{ product.get_discount_percentage }}% OFF</span>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <div class="product-badges mb-3">
-                        <span class="badge bg-secondary">Out of Stock</span>
                     </div>
                     {% endif %}
                     
@@ -109,85 +103,73 @@
                         <p>{{ product.description|linebreaks }}</p>
                     </div>
                     
-                    {% if grouped_attributes %}
-                    <div class="product-detail-meta mb-4">
-                        {% for attr_name, values in grouped_attributes.items %}
-                        <div class="product-meta-item">
-                            <span class="product-meta-label">{{ attr_name }}:</span>
-                            <div class="product-meta-info">
-                                {% for value in values %}
-                                <span class="badge bg-light text-dark">{{ value.value }}</span>
+                    <form action="{% url 'add_to_cart' %}" method="post" class="product-options-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        
+                        <!-- Size Selection -->
+                        {% if sizes %}
+                        <div class="product-detail-sizes mb-4">
+                            <span class="product-detail-label">Size:</span>
+                            <div class="size-options">
+                                {% for size in sizes %}
+                                <div class="size-option {% if forloop.first %}active{% endif %}" 
+                                     data-size-id="{{ size.id }}">
+                                    {{ size.name }}
+                                </div>
                                 {% endfor %}
                             </div>
+                            <input type="hidden" name="size_id" id="selected-size-id" value="{{ sizes.0.id }}">
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Available colors -->
-                    {% if 'Color' in grouped_attributes %}
-                    <div class="product-detail-colors mb-4">
-                        <span class="product-detail-label">Color:</span>
-                        <div class="color-options">
-                            {% for value in grouped_attributes.Color %}
-                            <div class="color-option {% if forloop.first %}active{% endif %}" 
-                                 style="background-color: {{ value.color_code|default:'#000' }};"
-                                 data-color="{{ value.value }}">
+                        {% endif %}
+                        
+                        <!-- Fabric Selection -->
+                        {% if fabrics %}
+                        <div class="product-detail-fabrics mb-4">
+                            <span class="product-detail-label">Fabric:</span>
+                            <select name="fabric_id" id="fabric-select" class="form-select" required>
+                                <option value="">Select Fabric</option>
+                                {% for fabric in fabrics %}
+                                <option value="{{ fabric.id }}">{{ fabric.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Color Selection (will be populated based on fabric) -->
+                        <div class="product-detail-colors mb-4" id="color-selection-container" style="display: none;">
+                            <span class="product-detail-label">Color:</span>
+                            <div class="color-options" id="color-options">
+                                <!-- Color options will be loaded via JavaScript when fabric is selected -->
                             </div>
-                            {% endfor %}
+                            <input type="hidden" name="color_id" id="selected-color-id" value="">
                         </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Available sizes -->
-                    {% if 'Size' in grouped_attributes %}
-                    <div class="product-detail-sizes mb-4">
-                        <span class="product-detail-label">Size:</span>
-                        <div class="size-options">
-                            {% for value in grouped_attributes.Size %}
-                            <div class="size-option {% if forloop.first %}active{% endif %}" 
-                                 data-size="{{ value.value }}">
-                                {{ value.value }}
+                        
+                        <!-- Quantity -->
+                        <div class="product-detail-quantity mb-4">
+                            <span class="product-detail-label">Quantity:</span>
+                            <div class="quantity-input">
+                                <button type="button" class="quantity-btn minus">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" name="quantity" value="1" min="1" id="product-quantity">
+                                <button type="button" class="quantity-btn plus">
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
-                            {% endfor %}
                         </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Quantity -->
-                    <div class="product-detail-quantity">
-                        <span class="product-detail-label">Quantity:</span>
-                        <div class="quantity-input">
-                            <button type="button" class="quantity-btn minus">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <input type="number" value="1" min="1" max="{{ product.quantity }}" id="product-quantity">
-                            <button type="button" class="quantity-btn plus">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        <small class="text-muted">{{ product.quantity }} items available</small>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="product-detail-buttons">
-                        <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="product_id" value="{{ product.id }}">
-                            <input type="hidden" name="quantity" id="cart-quantity" value="1">
-                            <button type="submit" class="btn btn-primary" {% if not product.is_in_stock %}disabled{% endif %}>
+                        
+                        <!-- Action Buttons -->
+                        <div class="product-detail-buttons">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                             </button>
-                        </form>
-                        
-                        <form action="{% url 'add_to_wishlist' %}" method="post" class="wishlist-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="product_id" value="{{ product.id }}">
-                            <button type="submit" class="btn btn-outline-primary">
+                            
+                            <button type="button" class="btn btn-outline-primary add-to-wishlist-btn">
                                 <i class="far fa-heart me-2"></i>Add to Wishlist
                             </button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                     
                     <!-- Product Info -->
                     <div class="product-detail-meta mt-4">
@@ -242,17 +224,25 @@
                             <th>SKU</th>
                             <td>{{ product.sku }}</td>
                         </tr>
-                        {% if grouped_attributes %}
-                        {% for attr_name, values in grouped_attributes.items %}
+                        {% if sizes %}
                         <tr>
-                            <th>{{ attr_name }}</th>
+                            <th>Available Sizes</th>
                             <td>
-                                {% for value in values %}
-                                {{ value.value }}{% if not forloop.last %}, {% endif %}
+                                {% for size in sizes %}
+                                {{ size.name }}{% if not forloop.last %}, {% endif %}
                                 {% endfor %}
                             </td>
                         </tr>
-                        {% endfor %}
+                        {% endif %}
+                        {% if fabrics %}
+                        <tr>
+                            <th>Available Fabrics</th>
+                            <td>
+                                {% for fabric in fabrics %}
+                                {{ fabric.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -451,17 +441,11 @@
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="product-card">
                     <div class="product-image">
-                        {% if product.is_in_stock %}
                         {% if product.sale_price %}
                         <div class="product-badges">
                             <span class="product-badge badge-sale">
                                 -{{ product.get_discount_percentage }}%
                             </span>
-                        </div>
-                        {% endif %}
-                        {% else %}
-                        <div class="product-badges">
-                            <span class="product-badge badge-out">Out of Stock</span>
                         </div>
                         {% endif %}
                         
@@ -499,14 +483,9 @@
                             {% endwith %}
                         </div>
                         
-                        <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="product_id" value="{{ product.id }}">
-                            <input type="hidden" name="quantity" value="1">
-                            <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
-                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                            </button>
-                        </form>
+                        <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary">
+                            View Details
+                        </a>
                     </div>
                 </div>
             </div>
@@ -532,20 +511,134 @@
         $('.size-option').on('click', function() {
             $('.size-option').removeClass('active');
             $(this).addClass('active');
+            // Update hidden input with selected size ID
+            $('#selected-size-id').val($(this).data('size-id'));
         });
         
-        // Color options click
-        $('.color-option').on('click', function() {
-            $('.color-option').removeClass('active');
-            $(this).addClass('active');
+        // Fabric select change - Load colors for selected fabric
+        $('#fabric-select').on('change', function() {
+            var fabricId = $(this).val();
+            if (fabricId) {
+                // Show color selection container
+                $('#color-selection-container').show();
+                
+                // Fetch colors for the selected fabric
+                $.ajax({
+                    url: '/products/api/fabric/' + fabricId + '/colors/',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        // Clear current color options
+                        $('#color-options').empty();
+                        
+                        // Add new color options
+                        if (data.colors && data.colors.length > 0) {
+                            $.each(data.colors, function(index, color) {
+                                var colorStyle = color.color_code ? 'background-color: ' + color.color_code + ';' : '';
+                                var colorClass = index === 0 ? 'color-option active' : 'color-option';
+                                
+                                var colorElement = $('<div>')
+                                    .attr('class', colorClass)
+                                    .attr('data-color-id', color.id)
+                                    .attr('style', colorStyle)
+                                    .attr('title', color.name);
+                                
+                                $('#color-options').append(colorElement);
+                            });
+                            
+                            // Set the first color as selected by default
+                            if (data.colors.length > 0) {
+                                $('#selected-color-id').val(data.colors[0].id);
+                            }
+                            
+                            // Add click event to newly created color options
+                            $('.color-option').on('click', function() {
+                                $('.color-option').removeClass('active');
+                                $(this).addClass('active');
+                                $('#selected-color-id').val($(this).data('color-id'));
+                            });
+                        } else {
+                            $('#color-options').html('<p class="text-muted">No colors available for this fabric</p>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching colors:', error);
+                        $('#color-options').html('<p class="text-danger">Error loading colors. Please try again.</p>');
+                    }
+                });
+            } else {
+                // Hide color selection if no fabric selected
+                $('#color-selection-container').hide();
+                $('#selected-color-id').val('');
+            }
         });
         
         // Quantity buttons
+        $('.quantity-btn.minus').on('click', function() {
+            var input = $('#product-quantity');
+            var value = parseInt(input.val()) - 1;
+            if (value < 1) value = 1;
+            input.val(value);
+        });
         
+        $('.quantity-btn.plus').on('click', function() {
+            var input = $('#product-quantity');
+            var value = parseInt(input.val()) + 1;
+            input.val(value);
+        });
         
-        // Quantity input change
-        $('#product-quantity').on('change', function() {
-            $('#cart-quantity').val($(this).val());
+        // Add to wishlist button - form submission
+        $('.add-to-wishlist-btn').on('click', function(e) {
+            e.preventDefault();
+            
+            // Get the form data
+            var productId = $('input[name="product_id"]').val();
+            var sizeId = $('#selected-size-id').val();
+            var fabricId = $('#fabric-select').val();
+            var colorId = $('#selected-color-id').val();
+            
+            // Create and submit a form to add to wishlist
+            var form = $('<form>')
+                .attr('method', 'post')
+                .attr('action', '{% url "add_to_wishlist" %}');
+            
+            // Add CSRF token
+            form.append($('<input>')
+                .attr('type', 'hidden')
+                .attr('name', 'csrfmiddlewaretoken')
+                .val('{{ csrf_token }}'));
+            
+            // Add product info
+            form.append($('<input>')
+                .attr('type', 'hidden')
+                .attr('name', 'product_id')
+                .val(productId));
+            
+            // Add variant info
+            if (sizeId) {
+                form.append($('<input>')
+                    .attr('type', 'hidden')
+                    .attr('name', 'size_id')
+                    .val(sizeId));
+            }
+            
+            if (fabricId) {
+                form.append($('<input>')
+                    .attr('type', 'hidden')
+                    .attr('name', 'fabric_id')
+                    .val(fabricId));
+            }
+            
+            if (colorId) {
+                form.append($('<input>')
+                    .attr('type', 'hidden')
+                    .attr('name', 'color_id')
+                    .val(colorId));
+            }
+            
+            // Append the form to the body and submit
+            $('body').append(form);
+            form.submit();
         });
         
         // Rating stars interaction

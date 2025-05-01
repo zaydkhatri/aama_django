@@ -40,6 +40,25 @@
             </div>
         </div>
         {% else %}
+        <!-- Checkout Steps -->
+        <div class="checkout-steps mb-5">
+            <div class="checkout-step completed">
+                <div class="checkout-step-number">1</div>
+                <div class="checkout-step-title">Shopping Cart</div>
+                <div class="checkout-step-description">Review items</div>
+            </div>
+            <div class="checkout-step active">
+                <div class="checkout-step-number">2</div>
+                <div class="checkout-step-title">Checkout</div>
+                <div class="checkout-step-description">Shipping & Payment</div>
+            </div>
+            <div class="checkout-step">
+                <div class="checkout-step-number">3</div>
+                <div class="checkout-step-title">Confirmation</div>
+                <div class="checkout-step-description">Complete order</div>
+            </div>
+        </div>
+        
         <form method="post" action="{% url 'checkout' %}" class="checkout-form">
             {% csrf_token %}
             <div class="row">
@@ -373,6 +392,21 @@
                                             {% endif %}
                                         </div>
                                     </div>
+                                    <div class="payment-method-desc">
+                                        {% if 'CREDIT_CARD' in method_choice.choice_value %}
+                                        Pay securely using your credit card.
+                                        {% elif 'DEBIT_CARD' in method_choice.choice_value %}
+                                        Pay using your debit card.
+                                        {% elif 'UPI' in method_choice.choice_value %}
+                                        Pay using UPI apps like Google Pay, PhonePe, etc.
+                                        {% elif 'NET_BANKING' in method_choice.choice_value %}
+                                        Pay directly from your bank account.
+                                        {% elif 'WALLET' in method_choice.choice_value %}
+                                        Pay using digital wallets.
+                                        {% elif 'COD' in method_choice.choice_value %}
+                                        Pay when you receive your order.
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -401,7 +435,7 @@
                     </div>
                     <div class="order-review card border-0 shadow-sm mb-4">
                         <div class="card-body p-4">
-                            <h4 class="mb-4">Your Order</h4>
+                            <h4 class="mb-4">Your Order <span class="badge bg-primary rounded-pill">{{ cart.items.count }} item(s)</span></h4>
                             
                             <div class="table-responsive mb-4">
                                 <table class="table review-table">
@@ -416,43 +450,49 @@
                                         <tr>
                                             <td>
                                                 {{ item.product.name }} × {{ item.quantity }}
-                                                {% if item.product.attributes.exists %}
+                                                {% if item.get_variant_display %}
                                                 <small class="d-block text-muted">
-                                                    {% for attr in item.product.attributes.all %}
-                                                    {{ attr.attribute.name }}: {{ attr.attribute_value.value }}{% if not forloop.last %}, {% endif %}
-                                                    {% endfor %}
+                                                    {{ item.get_variant_display }}
                                                 </small>
                                                 {% endif %}
                                             </td>
-                                            <td class="text-end">{{ item.get_total_price|currency }}</td>
+                                            <td class="text-end">{{ item.get_total_price_display }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                     <tfoot>
                                         <tr>
                                             <th>Subtotal</th>
-                                            <td class="text-end">{{ cart_total|currency }}</td>
+                                            <td class="text-end">{{ cart.get_subtotal_display }}</td>
                                         </tr>
                                         <tr>
                                             <th>Shipping</th>
-                                            <td class="text-end">{{ shipping_estimate|currency }}</td>
+                                            <td class="text-end">{{ shipping_estimate|currency:selected_currency }}</td>
                                         </tr>
                                         <tr>
                                             <th>Tax</th>
-                                            <td class="text-end">{{ tax_estimate|currency }}</td>
+                                            <td class="text-end">{{ tax_estimate|currency:selected_currency }}</td>
                                         </tr>
                                         {% if discount %}
                                         <tr>
                                             <th>Discount</th>
-                                            <td class="text-end text-danger">-{{ discount|currency }}</td>
+                                            <td class="text-end text-danger">-{{ discount|currency:selected_currency }}</td>
                                         </tr>
                                         {% endif %}
                                         <tr class="order-total">
                                             <th>Total</th>
-                                            <td class="text-end"><strong>{{ total_estimate|currency }}</strong></td>
+                                            <td class="text-end"><strong>{{ total_estimate|currency:selected_currency }}</strong></td>
                                         </tr>
                                     </tfoot>
                                 </table>
+                            </div>
+                            
+                            <!-- Selected Currency -->
+                            <div class="selected-currency mb-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Currency:</span>
+                                    <span>{{ selected_currency.code }} <span class="currency-badge">{{ selected_currency.symbol }}</span></span>
+                                </div>
                             </div>
                             
                             <!-- Coupon Code -->
@@ -472,9 +512,9 @@
                                 {% else %}
                                 <form action="{% url 'apply_coupon' %}" method="post" id="coupon-form">
                                     {% csrf_token %}
-                                    <div class="input-group">
+                                    <div class="input-group coupon-form">
                                         {{ coupon_form.code }}
-                                        <button type="button" class="btn btn-primary">Apply</button>
+                                        <button type="submit" class="btn btn-primary">Apply</button>
                                     </div>
                                 </form>
                                 {% endif %}
@@ -499,78 +539,10 @@
 </section>
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/checkout.css' %}">
+{% endblock %}
+
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle shipping address form visibility
-        const shippingAddressChoice = document.querySelectorAll('input[name="shipping_address_choice"]');
-        const existingShippingAddress = document.getElementById('existing-shipping-address');
-        const newShippingAddress = document.getElementById('new-shipping-address');
-        
-        shippingAddressChoice.forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                if (this.value === 'existing') {
-                    existingShippingAddress.style.display = 'block';
-                    newShippingAddress.style.display = 'none';
-                } else {
-                    existingShippingAddress.style.display = 'none';
-                    newShippingAddress.style.display = 'block';
-                }
-            });
-        });
-        
-        // Handle billing address form visibility
-        const billingSameAsShipping = document.getElementById('id_billing_same_as_shipping');
-        const billingAddressForm = document.getElementById('billing-address-form');
-        
-        billingSameAsShipping.addEventListener('change', function() {
-            if (this.checked) {
-                billingAddressForm.style.display = 'none';
-            } else {
-                billingAddressForm.style.display = 'block';
-            }
-        });
-        
-        // Handle billing address choice
-        const billingAddressChoice = document.querySelectorAll('input[name="billing_address_choice"]');
-        const existingBillingAddress = document.getElementById('existing-billing-address');
-        const newBillingAddress = document.getElementById('new-billing-address');
-        
-        billingAddressChoice.forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                if (this.value === 'existing') {
-                    existingBillingAddress.style.display = 'block';
-                    newBillingAddress.style.display = 'none';
-                } else {
-                    existingBillingAddress.style.display = 'none';
-                    newBillingAddress.style.display = 'block';
-                }
-            });
-        });
-        
-        // Set initial state
-        document.querySelector('input[name="shipping_address_choice"]:checked').dispatchEvent(new Event('change'));
-        billingSameAsShipping.dispatchEvent(new Event('change'));
-        
-        if (document.querySelector('input[name="billing_address_choice"]:checked')) {
-            document.querySelector('input[name="billing_address_choice"]:checked').dispatchEvent(new Event('change'));
-        }
-        
-        // Handle payment method selection
-        const paymentMethods = document.querySelectorAll('.payment-method');
-        
-        paymentMethods.forEach(function(method) {
-            method.addEventListener('click', function() {
-                const radio = this.querySelector('input[type="radio"]');
-                radio.checked = true;
-                
-                paymentMethods.forEach(function(m) {
-                    m.classList.remove('active');
-                });
-                
-                this.classList.add('active');
-            });
-        });
-    });
-</script>
+<script src="{% static 'js/checkout.js' %}"></script>
 {% endblock %}

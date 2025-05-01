@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 # products/views.py
 import uuid
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,10 +9,11 @@ from django.db.models import Q, Avg, Count
 from django.utils import timezone
 
 from .models import (
-    Category, Product, Attribute, AttributeValue, ProductAttribute,
-    Currency, Review, ProductView, SearchQuery, ReviewImage
+    Category, Product, Currency, Review, ProductView, 
+    SearchQuery, ReviewImage, Size, Color, Fabric,
+    FabricColor, ProductFabric, ProductSize
 )
-from .forms import ReviewForm, ProductFilterForm
+from .forms import ReviewForm, ProductFilterForm, ProductVariantForm
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -35,6 +33,13 @@ def home(request):
     new_arrivals = Product.objects.filter(is_active=True).order_by('-created_at')[:8]
     top_categories = Category.objects.filter(is_active=True)[:6]
     
+    # Add default images to products
+    for product in featured_products:
+        product.default_image = product.get_default_image()
+    
+    for product in new_arrivals:
+        product.default_image = product.get_default_image()
+    
     return render(request, 'products/home.html', {
         'featured_products': featured_products,
         'new_arrivals': new_arrivals,
@@ -44,7 +49,9 @@ def home(request):
 def product_list(request):
     products = Product.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
-    attributes = Attribute.objects.filter(is_active=True)
+    sizes = Size.objects.filter(is_active=True)
+    fabrics = Fabric.objects.filter(is_active=True)
+    colors = Color.objects.filter(is_active=True)
     
     # Filtering
     form = ProductFilterForm(request.GET)
@@ -63,14 +70,22 @@ def product_list(request):
         if max_price:
             products = products.filter(price__lte=max_price)
         
-        # Attribute filters
-        for attr in attributes:
-            attr_values = request.GET.getlist(f'attribute_{attr.id}')
-            if attr_values:
-                products = products.filter(
-                    attributes__attribute=attr,
-                    attributes__attribute_value__id__in=attr_values
-                ).distinct()
+        # Size filter
+        size = form.cleaned_data.get('size')
+        if size:
+            products = products.filter(sizes=size)
+        
+        # Fabric filter
+        fabric = form.cleaned_data.get('fabric')
+        if fabric:
+            products = products.filter(fabrics=fabric)
+        
+        # Color filter
+        color = form.cleaned_data.get('color')
+        if color:
+            # Get products that have this color available via their fabrics
+            fabric_ids = FabricColor.objects.filter(color=color).values_list('fabric_id', flat=True)
+            products = products.filter(product_fabrics__fabric_id__in=fabric_ids).distinct()
         
         # Sort options
         sort_option = request.GET.get('sort') or form.cleaned_data.get('sort')
@@ -104,7 +119,6 @@ def product_list(request):
         )
     
     # IMPORTANT: Add default images to all products AFTER all filtering and sorting
-    # This ensures images are available regardless of how products are filtered/sorted
     for product in products:
         product.default_image = product.get_default_image()
     
@@ -118,11 +132,6 @@ def product_list(request):
     except EmptyPage:
         products = paginator.page(paginator.num_pages)
     
-    # Add default images to the paginated products as well
-    for product in products:
-        if not hasattr(product, 'default_image') or not product.default_image:
-            product.default_image = product.get_default_image()
-    
     # Get any query parameters for passing to pagination links
     query_params = request.GET.copy()
     if 'page' in query_params:
@@ -131,65 +140,14 @@ def product_list(request):
     return render(request, 'products/product_list.html', {
         'products': products,
         'categories': categories,
-        'attributes': attributes,
+        'sizes': sizes,
+        'fabrics': fabrics,
+        'colors': colors,
         'form': form,
         'query': query,
         'query_params': query_params.urlencode(),
         'current_sorting': request.GET.get('sort', '')
     })
-
-# def product_detail(request, slug):
-#     product = get_object_or_404(Product, slug=slug, is_active=True)
-#     related_products = Product.objects.filter(
-#         categories__in=product.categories.all()
-#     ).exclude(id=product.id).distinct()[:4]
-    
-#     # Get all attributes and their values for this product
-#     product_attributes = product.attributes.all().select_related('attribute', 'attribute_value')
-#     product.get_default_image = product.media.filter(is_default=True).first()
-#     # Group attributes by attribute name
-#     grouped_attributes = {}
-#     for pa in product_attributes:
-#         attr_name = pa.attribute.name
-#         if attr_name not in grouped_attributes:
-#             grouped_attributes[attr_name] = []
-#         grouped_attributes[attr_name].append(pa.attribute_value)
-    
-#     # Get reviews
-#     reviews = product.reviews.filter(is_published=True).select_related('user').prefetch_related('images')
-    
-#     # Get review statistics
-#     review_stats = {
-#         'avg_rating': reviews.aggregate(Avg('rating'))['rating__avg'] or 0,
-#         'count': reviews.count(),
-#         'rating_5': reviews.filter(rating=5).count(),
-#         'rating_4': reviews.filter(rating=4).count(),
-#         'rating_3': reviews.filter(rating=3).count(),
-#         'rating_2': reviews.filter(rating=2).count(),
-#         'rating_1': reviews.filter(rating=1).count(),
-#     }
-    
-#     # Log product view
-#     ProductView.objects.create(
-#         product=product,
-#         user=request.user if request.user.is_authenticated else None,
-#         session_id=get_session_id(request),
-#         user_agent=request.META.get('HTTP_USER_AGENT', ''),
-#         ip_address=get_client_ip(request),
-#         device_type=request.META.get('HTTP_USER_AGENT', '').lower()
-#     )
-    
-#     # Review form
-#     form = ReviewForm()
-    
-#     return render(request, 'products/product_detail.html', {
-#         'product': product,
-#         'related_products': related_products,
-#         'grouped_attributes': grouped_attributes,
-#         'reviews': reviews,
-#         'review_stats': review_stats,
-#         'form': form,
-#     })
 
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
@@ -202,22 +160,34 @@ def product_detail(request, slug):
     for related_product in related_products:
         related_product.default_image = related_product.get_default_image()
     
-    # Get all attributes and their values for this product
-    product_attributes = product.attributes.all().select_related('attribute', 'attribute_value')
-    
     # Set the default image properly using the model's method
     product.default_image = product.get_default_image()
     
     # Get all product images for gallery
     product.all_images = product.media.filter(type='IMAGE').order_by('sort_order')
     
-    # Group attributes by attribute name
-    grouped_attributes = {}
-    for pa in product_attributes:
-        attr_name = pa.attribute.name
-        if attr_name not in grouped_attributes:
-            grouped_attributes[attr_name] = []
-        grouped_attributes[attr_name].append(pa.attribute_value)
+    # Get available sizes for this product
+    sizes = Size.objects.filter(
+        is_active=True,
+        products=product
+    ).order_by('sort_order')
+    
+    # Get available fabrics for this product
+    fabrics = Fabric.objects.filter(
+        is_active=True,
+        products=product
+    )
+    
+    # Create a dictionary of colors available for each fabric
+    fabric_colors = {}
+    for fabric in fabrics:
+        fabric_colors[str(fabric.id)] = list(Color.objects.filter(
+            is_active=True,
+            fabrics=fabric
+        ).values('id', 'name', 'color_code'))
+    
+    # Get variant selection form
+    variant_form = ProductVariantForm(product=product)
     
     # Get reviews
     reviews = product.reviews.filter(is_published=True).select_related('user').prefetch_related('images')
@@ -249,29 +219,47 @@ def product_detail(request, slug):
     return render(request, 'products/product_detail.html', {
         'product': product,
         'related_products': related_products,
-        'grouped_attributes': grouped_attributes,
+        'sizes': sizes,
+        'fabrics': fabrics,
+        'fabric_colors': fabric_colors,
+        'variant_form': variant_form,
         'reviews': reviews,
         'review_stats': review_stats,
         'form': form,
     })
-# def category_detail(request, slug):
-#     category = get_object_or_404(Category, slug=slug, is_active=True)
-#     products = category.get_all_products()
-    
-#     # Pagination
-#     paginator = Paginator(products, 12)  # Show 12 products per page
-#     page = request.GET.get('page')
-#     try:
-#         products = paginator.page(page)
-#     except PageNotAnInteger:
-#         products = paginator.page(1)
-#     except EmptyPage:
-#         products = paginator.page(paginator.num_pages)
-    
-#     return render(request, 'products/category_detail.html', {
-#         'category': category,
-#         'products': products,
-#     })
+
+def get_colors_for_fabric(request, fabric_id):
+    """AJAX endpoint to get colors for a specific fabric"""
+    try:
+        # Get the fabric by ID
+        fabric = get_object_or_404(Fabric, id=fabric_id)
+        
+        # Find all colors associated with this fabric through the FabricColor model
+        fabric_colors = FabricColor.objects.filter(fabric=fabric)
+        color_ids = fabric_colors.values_list('color_id', flat=True)
+        
+        # Get the actual Color objects
+        colors = Color.objects.filter(id__in=color_ids, is_active=True)
+        
+        # Convert to a list of dictionaries for JSON response
+        colors_data = list(colors.values('id', 'name', 'color_code'))
+        
+        # Return JSON response
+        return JsonResponse({
+            'success': True,
+            'colors': colors_data
+        })
+    except Exception as e:
+        # Log the error for debugging
+        import logging
+        logging.error(f"Error in get_colors_for_fabric: {str(e)}")
+        
+        # Return error response
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug, is_active=True)
     products_list = category.get_all_products()
@@ -284,12 +272,26 @@ def category_detail(request, slug):
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
     sort = request.GET.get('sort')
+    size_id = request.GET.get('size')
+    fabric_id = request.GET.get('fabric')
+    color_id = request.GET.get('color')
     
     if min_price:
         products_list = products_list.filter(price__gte=min_price)
     
     if max_price:
         products_list = products_list.filter(price__lte=max_price)
+    
+    if size_id:
+        products_list = products_list.filter(sizes__id=size_id)
+    
+    if fabric_id:
+        products_list = products_list.filter(fabrics__id=fabric_id)
+    
+    if color_id:
+        # Get products that have this color available via their fabrics
+        fabric_ids = FabricColor.objects.filter(color_id=color_id).values_list('fabric_id', flat=True)
+        products_list = products_list.filter(product_fabrics__fabric_id__in=fabric_ids).distinct()
     
     # Sorting
     if sort:
@@ -316,11 +318,22 @@ def category_detail(request, slug):
     # Get all categories for sidebar
     categories = Category.objects.filter(is_active=True)
     
+    # Get sizes, fabrics, and colors for filtering
+    sizes = Size.objects.filter(is_active=True)
+    fabrics = Fabric.objects.filter(is_active=True)
+    colors = Color.objects.filter(is_active=True)
+    
     return render(request, 'products/category_detail.html', {
         'category': category,
         'products': products,
         'categories': categories,
-        'all_products_count': Product.objects.filter(is_active=True).count()
+        'sizes': sizes,
+        'fabrics': fabrics,
+        'colors': colors,
+        'all_products_count': Product.objects.filter(is_active=True).count(),
+        'selected_size': size_id,
+        'selected_fabric': fabric_id,
+        'selected_color': color_id,
     })
 
 @login_required
@@ -328,7 +341,7 @@ def add_review(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
     
     if request.method == 'POST':
-        form = ReviewForm(request.POST, request.FILES)
+        form = ReviewForm(request.POST)
         if form.is_valid():
             review = form.save(commit=False)
             review.product = product
@@ -345,12 +358,13 @@ def add_review(request, slug):
             review.is_verified = has_purchased
             review.save()
             
-            # Save review images
-            for image in request.FILES.getlist('images'):
-                ReviewImage.objects.create(
-                    review=review,
-                    image=image
-                )
+            # Handle multiple uploaded files
+            if request.FILES:
+                for image in request.FILES.getlist('images'):
+                    ReviewImage.objects.create(
+                        review=review,
+                        image=image
+                    )
             
             messages.success(request, 'Thank you! Your review has been submitted.')
             return redirect('product_detail', slug=slug)
@@ -358,10 +372,6 @@ def add_review(request, slug):
     # If not POST or form invalid
     messages.error(request, 'There was an error submitting your review. Please try again.')
     return redirect('product_detail', slug=slug)
-
-def page_detail(request, slug):
-    page = get_object_or_404(Page, slug=slug, is_published=True)
-    return render(request, 'products/page_detail.html', {'page': page})
 
 def search(request):
     """Display search results for products."""
@@ -422,21 +432,31 @@ def product_search_api(request):
 def get_product_attributes_api(request, product_id):
     try:
         product = Product.objects.get(id=product_id)
-        attributes = []
         
-        for attr in product.attributes.all().select_related('attribute', 'attribute_value'):
-            attributes.append({
-                'attribute_id': str(attr.attribute.id),
-                'attribute_name': attr.attribute.name,
-                'value_id': str(attr.attribute_value.id),
-                'value': attr.attribute_value.value,
-                'color_code': attr.attribute_value.color_code,
-                'image': attr.attribute_value.image.url if attr.attribute_value.image else None,
-            })
+        # Get sizes
+        sizes = Size.objects.filter(
+            products=product,
+            is_active=True
+        ).values('id', 'name')
+        
+        # Get fabrics
+        fabrics = Fabric.objects.filter(
+            products=product,
+            is_active=True
+        ).values('id', 'name')
+        
+        # Get available colors based on product's fabrics
+        fabric_ids = product.fabrics.values_list('id', flat=True)
+        colors = Color.objects.filter(
+            fabrics__in=fabric_ids,
+            is_active=True
+        ).distinct().values('id', 'name', 'color_code')
         
         return JsonResponse({
             'product_id': str(product.id),
-            'attributes': attributes
+            'sizes': list(sizes),
+            'fabrics': list(fabrics),
+            'colors': list(colors)
         })
     except Product.DoesNotExist:
         return JsonResponse({'error': 'Product not found'}, status=404)

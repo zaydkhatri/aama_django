@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 
 from .models import Cart, CartItem, Wishlist, WishlistItem, GuestCart, GuestCartItem
-from products.models import Product, Currency
+from products.models import Product, Currency, Size, Color, Fabric, FabricColor
 
 def get_or_create_guest_cart(request):
     """Get or create a guest cart based on session key."""
@@ -25,8 +25,14 @@ def merge_carts(user_cart, guest_cart):
     with transaction.atomic():
         for guest_item in guest_cart.items.all():
             try:
-                # Try to find existing cart item
-                cart_item = CartItem.objects.get(cart=user_cart, product=guest_item.product)
+                # Try to find existing cart item with same variant
+                cart_item = CartItem.objects.get(
+                    cart=user_cart, 
+                    product=guest_item.product,
+                    size=guest_item.size,
+                    color=guest_item.color,
+                    fabric=guest_item.fabric
+                )
                 # Update quantity
                 cart_item.quantity += guest_item.quantity
                 cart_item.save()
@@ -35,6 +41,9 @@ def merge_carts(user_cart, guest_cart):
                 CartItem.objects.create(
                     cart=user_cart,
                     product=guest_item.product,
+                    size=guest_item.size,
+                    color=guest_item.color,
+                    fabric=guest_item.fabric,
                     quantity=guest_item.quantity
                 )
         
@@ -82,6 +91,11 @@ def add_to_cart(request):
     product_id = request.POST.get('product_id')
     quantity = int(request.POST.get('quantity', 1))
     
+    # Get size, color, and fabric selections
+    size_id = request.POST.get('size_id')
+    color_id = request.POST.get('color_id')
+    fabric_id = request.POST.get('fabric_id')
+    
     if quantity <= 0:
         return JsonResponse({
             'status': 'error',
@@ -90,19 +104,31 @@ def add_to_cart(request):
     
     product = get_object_or_404(Product, id=product_id, is_active=True)
     
-    # Check stock
-    if product.quantity < quantity:
-        return JsonResponse({
-            'status': 'error',
-            'message': f'Sorry, we only have {product.quantity} in stock'
-        }, status=400)
+    # Get size, color, and fabric objects if IDs provided
+    size = get_object_or_404(Size, id=size_id) if size_id else None
+    color = get_object_or_404(Color, id=color_id) if color_id else None
+    fabric = get_object_or_404(Fabric, id=fabric_id) if fabric_id else None
+    
+    # Validate that the selected color is available for the selected fabric
+    if color and fabric:
+        if not FabricColor.objects.filter(fabric=fabric, color=color).exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Color {color.name} is not available for {fabric.name}'
+            }, status=400)
     
     if request.user.is_authenticated:
         cart, created = Cart.objects.get_or_create(user=request.user)
         
         try:
-            # Try to find existing cart item
-            cart_item = CartItem.objects.get(cart=cart, product=product)
+            # Try to find existing cart item with same variant
+            cart_item = CartItem.objects.get(
+                cart=cart,
+                product=product,
+                size=size,
+                color=color,
+                fabric=fabric
+            )
             # Update quantity
             cart_item.quantity += quantity
             cart_item.save()
@@ -111,14 +137,23 @@ def add_to_cart(request):
             CartItem.objects.create(
                 cart=cart,
                 product=product,
+                size=size,
+                color=color,
+                fabric=fabric,
                 quantity=quantity
             )
     else:
         cart = get_or_create_guest_cart(request)
         
         try:
-            # Try to find existing cart item
-            cart_item = GuestCartItem.objects.get(cart=cart, product=product)
+            # Try to find existing cart item with same variant
+            cart_item = GuestCartItem.objects.get(
+                cart=cart,
+                product=product,
+                size=size,
+                color=color,
+                fabric=fabric
+            )
             # Update quantity
             cart_item.quantity += quantity
             cart_item.save()
@@ -127,12 +162,26 @@ def add_to_cart(request):
             GuestCartItem.objects.create(
                 cart=cart,
                 product=product,
+                size=size,
+                color=color,
+                fabric=fabric,
                 quantity=quantity
             )
     
+    # Create variant display string
+    variant_parts = []
+    if size:
+        variant_parts.append(f"Size: {size.name}")
+    if color:
+        variant_parts.append(f"Color: {color.name}")
+    if fabric:
+        variant_parts.append(f"Fabric: {fabric.name}")
+        
+    variant_display = f" ({', '.join(variant_parts)})" if variant_parts else ""
+    
     return JsonResponse({
         'status': 'success',
-        'message': f"{product.name} added to your cart",
+        'message': f"{product.name}{variant_display} added to your cart",
         'cart_count': cart.get_item_count()
     })
 
@@ -157,13 +206,6 @@ def update_cart(request):
         else:
             cart = get_or_create_guest_cart(request)
             cart_item = get_object_or_404(GuestCartItem, id=item_id, cart=cart)
-        
-        # Check stock
-        if cart_item.product.quantity < quantity:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Sorry, we only have {cart_item.product.quantity} in stock'
-            }, status=400)
         
         # Don't update if quantity hasn't changed
         old_quantity = cart_item.quantity
@@ -232,6 +274,10 @@ def remove_from_cart(request):
         cart_item = get_object_or_404(GuestCartItem, id=item_id, cart=cart)
     
     product_name = cart_item.product.name
+    variant_display = cart_item.get_variant_display()
+    if variant_display:
+        product_name = f"{product_name} ({variant_display})"
+        
     cart = cart_item.cart
     cart_item.delete()
     
@@ -286,12 +332,23 @@ def wishlist_detail(request):
 def add_to_wishlist(request):
     """Add a product to wishlist."""
     product_id = request.POST.get('product_id')
+    
+    # Get size, color, and fabric selections (optional for wishlist)
+    size_id = request.POST.get('size_id')
+    color_id = request.POST.get('color_id')
+    fabric_id = request.POST.get('fabric_id')
+    
     product = get_object_or_404(Product, id=product_id, is_active=True)
+    
+    # Get size, color, and fabric objects if IDs provided
+    size = get_object_or_404(Size, id=size_id) if size_id else None
+    color = get_object_or_404(Color, id=color_id) if color_id else None
+    fabric = get_object_or_404(Fabric, id=fabric_id) if fabric_id else None
     
     wishlist, created = Wishlist.objects.get_or_create(user=request.user)
     
-    # Check if product already in wishlist
-    if WishlistItem.objects.filter(wishlist=wishlist, product=product).exists():
+    # Check if product with same variant already in wishlist
+    if WishlistItem.objects.filter(wishlist=wishlist, product=product, size=size, color=color, fabric=fabric).exists():
         return JsonResponse({
             'status': 'info',
             'message': 'This product is already in your wishlist'
@@ -300,12 +357,26 @@ def add_to_wishlist(request):
     # Add to wishlist
     WishlistItem.objects.create(
         wishlist=wishlist,
-        product=product
+        product=product,
+        size=size,
+        color=color,
+        fabric=fabric
     )
+    
+    # Create variant display string
+    variant_parts = []
+    if size:
+        variant_parts.append(f"Size: {size.name}")
+    if color:
+        variant_parts.append(f"Color: {color.name}")
+    if fabric:
+        variant_parts.append(f"Fabric: {fabric.name}")
+        
+    variant_display = f" ({', '.join(variant_parts)})" if variant_parts else ""
     
     return JsonResponse({
         'status': 'success',
-        'message': f"{product.name} added to your wishlist",
+        'message': f"{product.name}{variant_display} added to your wishlist",
         'wishlist_count': wishlist.get_item_count()
     })
 
@@ -317,6 +388,10 @@ def remove_from_wishlist(request):
     wishlist_item = get_object_or_404(WishlistItem, id=item_id, wishlist__user=request.user)
     
     product_name = wishlist_item.product.name
+    variant_display = wishlist_item.get_variant_display()
+    if variant_display:
+        product_name = f"{product_name} ({variant_display})"
+        
     wishlist = wishlist_item.wishlist
     wishlist_item.delete()
     
@@ -336,8 +411,14 @@ def move_to_cart(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
     
     try:
-        # Try to find existing cart item
-        cart_item = CartItem.objects.get(cart=cart, product=wishlist_item.product)
+        # Try to find existing cart item with same variant
+        cart_item = CartItem.objects.get(
+            cart=cart, 
+            product=wishlist_item.product,
+            size=wishlist_item.size,
+            color=wishlist_item.color,
+            fabric=wishlist_item.fabric
+        )
         # Update quantity
         cart_item.quantity += 1
         cart_item.save()
@@ -346,11 +427,18 @@ def move_to_cart(request):
         CartItem.objects.create(
             cart=cart,
             product=wishlist_item.product,
+            size=wishlist_item.size,
+            color=wishlist_item.color,
+            fabric=wishlist_item.fabric,
             quantity=1
         )
     
     # Remove from wishlist
     product_name = wishlist_item.product.name
+    variant_display = wishlist_item.get_variant_display()
+    if variant_display:
+        product_name = f"{product_name} ({variant_display})"
+        
     wishlist = wishlist_item.wishlist
     wishlist_item.delete()
     
@@ -376,13 +464,15 @@ def add_all_to_cart(request):
     
     count = 0
     for wishlist_item in wishlist.items.all():
-        # Check stock first
-        if wishlist_item.product.quantity < 1:
-            continue
-            
         try:
-            # Try to find existing cart item
-            cart_item = CartItem.objects.get(cart=cart, product=wishlist_item.product)
+            # Try to find existing cart item with same variant
+            cart_item = CartItem.objects.get(
+                cart=cart, 
+                product=wishlist_item.product,
+                size=wishlist_item.size,
+                color=wishlist_item.color,
+                fabric=wishlist_item.fabric
+            )
             # Update quantity
             cart_item.quantity += 1
             cart_item.save()
@@ -391,6 +481,9 @@ def add_all_to_cart(request):
             CartItem.objects.create(
                 cart=cart,
                 product=wishlist_item.product,
+                size=wishlist_item.size,
+                color=wishlist_item.color,
+                fabric=wishlist_item.fabric,
                 quantity=1
             )
         count += 1

@@ -3,7 +3,7 @@ import uuid
 from decimal import Decimal
 from django.db import models
 from django.contrib.auth import get_user_model
-from products.models import Product, Currency
+from products.models import Product, Currency, Size, Color, Fabric
 
 User = get_user_model()
 
@@ -204,6 +204,9 @@ class CartItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_items')
+    size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE, null=True)
+    fabric = models.ForeignKey(Fabric, on_delete=models.CASCADE, null=True)
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -211,10 +214,20 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = 'Cart Item'
         verbose_name_plural = 'Cart Items'
-        unique_together = ('cart', 'product')
+        # Now we need a unique constraint for the combination of product, size, color, and fabric
+        unique_together = ('cart', 'product', 'size', 'color', 'fabric')
     
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in cart"
+        variant_info = []
+        if self.size:
+            variant_info.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_info.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_info.append(f"Fabric: {self.fabric.name}")
+            
+        variant_str = f" ({', '.join(variant_info)})" if variant_info else ""
+        return f"{self.quantity} x {self.product.name}{variant_str} in cart"
     
     def get_total_price(self):
         return self.product.get_active_price() * self.quantity
@@ -273,6 +286,21 @@ class CartItem(models.Model):
         # Format with currency symbol
         return format_price(total, selected_currency)
 
+    def get_variant_display(self):
+        """Get a display string for the product variant (size, color, fabric)"""
+        variant_parts = []
+        if self.size:
+            variant_parts.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_parts.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_parts.append(f"Fabric: {self.fabric.name}")
+            
+        if not variant_parts:
+            return ""
+            
+        return " / ".join(variant_parts)
+
 
 class Wishlist(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -295,15 +323,42 @@ class WishlistItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist_items')
+    size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True, blank=True)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE, null=True, blank=True)
+    fabric = models.ForeignKey(Fabric, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name = 'Wishlist Item'
         verbose_name_plural = 'Wishlist Items'
-        unique_together = ('wishlist', 'product')
+        unique_together = ('wishlist', 'product', 'size', 'color', 'fabric')
     
     def __str__(self):
-        return f"{self.product.name} in wishlist"
+        variant_info = []
+        if self.size:
+            variant_info.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_info.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_info.append(f"Fabric: {self.fabric.name}")
+            
+        variant_str = f" ({', '.join(variant_info)})" if variant_info else ""
+        return f"{self.product.name}{variant_str} in wishlist"
+
+    def get_variant_display(self):
+        """Get a display string for the product variant (size, color, fabric)"""
+        variant_parts = []
+        if self.size:
+            variant_parts.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_parts.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_parts.append(f"Fabric: {self.fabric.name}")
+            
+        if not variant_parts:
+            return ""
+            
+        return " / ".join(variant_parts)
 
 
 class GuestCart(models.Model):
@@ -503,6 +558,9 @@ class GuestCartItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cart = models.ForeignKey(GuestCart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE, null=True)
+    fabric = models.ForeignKey(Fabric, on_delete=models.CASCADE, null=True)
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -510,10 +568,19 @@ class GuestCartItem(models.Model):
     class Meta:
         verbose_name = 'Guest Cart Item'
         verbose_name_plural = 'Guest Cart Items'
-        unique_together = ('cart', 'product')
+        unique_together = ('cart', 'product', 'size', 'color', 'fabric')
     
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in guest cart"
+        variant_info = []
+        if self.size:
+            variant_info.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_info.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_info.append(f"Fabric: {self.fabric.name}")
+            
+        variant_str = f" ({', '.join(variant_info)})" if variant_info else ""
+        return f"{self.quantity} x {self.product.name}{variant_str} in guest cart"
     
     def get_total_price(self):
         return self.product.get_active_price() * self.quantity
@@ -572,3 +639,18 @@ class GuestCartItem(models.Model):
         
         # Format with currency symbol
         return format_price(total, selected_currency)
+
+    def get_variant_display(self):
+        """Get a display string for the product variant (size, color, fabric)"""
+        variant_parts = []
+        if self.size:
+            variant_parts.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_parts.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_parts.append(f"Fabric: {self.fabric.name}")
+            
+        if not variant_parts:
+            return ""
+            
+        return " / ".join(variant_parts)

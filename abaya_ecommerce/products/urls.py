@@ -14,11 +14,12 @@ urlpatterns = [
     path('category/<slug:slug>/', views.category_detail, name='category_detail'),
     
     # Static pages
-    path('page/<slug:slug>/', views.page_detail, name='page_detail'),
+    # path('page/<slug:slug>/', views.page_detail, name='page_detail'),
     
 
     
     # API endpoints
     path('api/search/', views.product_search_api, name='product_search_api'),
     path('api/product/<uuid:product_id>/attributes/', views.get_product_attributes_api, name='get_product_attributes_api'),
+    path('api/fabric/<uuid:fabric_id>/colors/', views.get_colors_for_fabric, name='get_colors_for_fabric'),
 ]

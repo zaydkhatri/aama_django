@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 # products/models.py
 import uuid
 from django.db import models
@@ -8,6 +7,70 @@ from django.utils.text import slugify
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+
+class Size(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=50)  # S, M, L, XL, etc.
+    sort_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+        verbose_name = 'Size'
+        verbose_name_plural = 'Sizes'
+
+    def __str__(self):
+        return self.name
+
+class Fabric(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)  # Cotton, Silk, Chiffon, etc.
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Fabric'
+        verbose_name_plural = 'Fabrics'
+
+    def __str__(self):
+        return self.name
+
+class Color(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)  # Red, Blue, Green, etc.
+    color_code = models.CharField(max_length=10, blank=True, null=True)  # Hex color code
+    image = models.ImageField(upload_to='colors/', blank=True, null=True)  # For patterns or complex colors
+    is_active = models.BooleanField(default=True)
+    fabrics = models.ManyToManyField(Fabric, through='FabricColor', related_name='colors')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Color'
+        verbose_name_plural = 'Colors'
+
+    def __str__(self):
+        return self.name
+
+class FabricColor(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    fabric = models.ForeignKey(Fabric, on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('fabric', 'color')
+        verbose_name = 'Fabric Color'
+        verbose_name_plural = 'Fabric Colors'
+    
+    def __str__(self):
+        return f"{self.fabric.name} - {self.color.name}"
 
 class Category(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -57,12 +120,13 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    quantity = models.IntegerField(default=0)
     meta_title = models.CharField(max_length=255, blank=True, null=True)
     meta_description = models.TextField(blank=True, null=True)
     meta_keywords = models.CharField(max_length=255, blank=True, null=True)
     categories = models.ManyToManyField(Category, through='ProductCategory', related_name='products')
+    # New fields for the simplified attribute model
+    fabrics = models.ManyToManyField(Fabric, through='ProductFabric', related_name='products')
+    sizes = models.ManyToManyField(Size, through='ProductSize', related_name='products')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -88,9 +152,6 @@ class Product(models.Model):
             return round(discount, 2)
         return 0
     
-    def is_in_stock(self):
-        return self.quantity > 0
-    
     def get_active_price(self):
         return self.sale_price if self.sale_price else self.price
     
@@ -102,10 +163,6 @@ class Product(models.Model):
     
     def get_review_count(self):
         return self.reviews.filter(is_published=True).count()
-    
-    # def get_default_image(self):
-    #     default_image = self.media.filter(is_default=True).first()
-    #     return default_image.file if default_image else None
 
     def get_default_image(self):
         """Get the default image for this product, with fallback mechanisms."""
@@ -122,8 +179,6 @@ class Product(models.Model):
         
         # If no image is found, return None
         return None
-
-    # Use these simplified methods in the Product model
 
     def get_price_display(self, currency=None):
         """
@@ -170,6 +225,15 @@ class Product(models.Model):
         # Format with currency symbol and return
         return format_price(price, currency)
 
+    def get_available_colors(self):
+        """Get all available colors for this product based on assigned fabrics."""
+        product_fabrics = self.product_fabrics.all()
+        if not product_fabrics:
+            return Color.objects.none()
+            
+        fabric_ids = [pf.fabric_id for pf in product_fabrics]
+        return Color.objects.filter(fabrics__in=fabric_ids, is_active=True).distinct()
+
 
 class ProductCategory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -183,6 +247,47 @@ class ProductCategory(models.Model):
     
     def __str__(self):
         return f"{self.product.name} - {self.category.name}"
+
+
+class ProductFabric(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_fabrics')
+    fabric = models.ForeignKey(Fabric, on_delete=models.CASCADE)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Product Fabric'
+        verbose_name_plural = 'Product Fabrics'
+        unique_together = ('product', 'fabric')
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.fabric.name}"
+        
+    def save(self, *args, **kwargs):
+        # If this fabric is being set as default, unset default flag for other fabrics of this product
+        if self.is_default:
+            ProductFabric.objects.filter(
+                product=self.product,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        
+        super().save(*args, **kwargs)
+
+
+class ProductSize(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_sizes')
+    size = models.ForeignKey(Size, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Product Size'
+        verbose_name_plural = 'Product Sizes'
+        unique_together = ('product', 'size')
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.size.name}"
 
 
 class ProductMedia(models.Model):
@@ -224,71 +329,6 @@ class ProductMedia(models.Model):
             self.url = f"https://{domain}{self.file.url}"
         
         super().save(*args, **kwargs)
-
-
-class Attribute(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = 'Attribute'
-        verbose_name_plural = 'Attributes'
-        ordering = ['name']
-    
-    def __str__(self):
-        return self.name
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-
-class AttributeValue(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='values')
-    value = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100)
-    color_code = models.CharField(max_length=10, blank=True, null=True)
-    image = models.ImageField(upload_to='attributes/', blank=True, null=True)
-    sort_order = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = 'Attribute Value'
-        verbose_name_plural = 'Attribute Values'
-        ordering = ['attribute__name', 'sort_order', 'value']
-        unique_together = ('attribute', 'value')
-    
-    def __str__(self):
-        return f"{self.attribute.name}: {self.value}"
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.value)
-        super().save(*args, **kwargs)
-
-
-class ProductAttribute(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='attributes')
-    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        verbose_name = 'Product Attribute'
-        verbose_name_plural = 'Product Attributes'
-        unique_together = ('product', 'attribute', 'attribute_value')
-    
-    def __str__(self):
-        return f"{self.product.name} - {self.attribute.name}: {self.attribute_value.value}"
 
 
 class Currency(models.Model):

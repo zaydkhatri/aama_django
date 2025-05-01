@@ -163,6 +163,7 @@ INSTALLED_APPS = [
     
     # Custom apps
     'users',
+    'dashboard',
     'products',
     'orders',
     'payments',

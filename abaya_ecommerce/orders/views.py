@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 # orders/views.py
 import uuid
 import datetime
@@ -27,7 +24,7 @@ from .forms import (
     CheckoutForm, CouponForm, ReturnForm, ReturnItemForm, OrderFilterForm
 )
 from carts.models import Cart, CartItem, GuestCart, GuestCartItem
-from products.models import Product, Currency
+from products.models import Product, Currency, Size, Color, Fabric, FabricColor
 from users.models import User, Address
 
 def generate_order_number():
@@ -248,6 +245,9 @@ def checkout(request):
                         OrderItem.objects.create(
                             order=order,
                             product=cart_item.product,
+                            size=cart_item.size,
+                            color=cart_item.color,
+                            fabric=cart_item.fabric,
                             quantity=cart_item.quantity,
                             price=cart_item.product.get_active_price(),
                             total=cart_item.get_total_price()
@@ -600,7 +600,7 @@ def request_return(request, order_number):
                     refund_status='PENDING'
                 )
                 
-                # Add return items
+                # Add return items (with size, color, fabric)
                 for order_item in order.items.all():
                     quantity = int(request.POST.get(f'item_{order_item.id}_quantity', 0))
                     reason = request.POST.get(f'item_{order_item.id}_reason', '')
@@ -609,6 +609,9 @@ def request_return(request, order_number):
                         ReturnItem.objects.create(
                             return_request=return_request,
                             product=order_item.product,
+                            size=order_item.size,
+                            color=order_item.color,
+                            fabric=order_item.fabric,
                             quantity=quantity,
                             reason=reason
                         )

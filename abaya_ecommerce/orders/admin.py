@@ -1,6 +1,3 @@
-from django.contrib import admin
-
-# Register your models here.
 # orders/admin.py
 from django.contrib import admin
 from django.utils.html import format_html
@@ -15,7 +12,7 @@ from .models import (
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    fields = ('product', 'quantity', 'price', 'total')
+    fields = ('product', 'size', 'color', 'fabric', 'quantity', 'price', 'total')
     readonly_fields = ('total',)
 
 class OrderStatusLogInline(admin.TabularInline):
@@ -188,7 +185,7 @@ class PaymentAdmin(admin.ModelAdmin):
 class ReturnItemInline(admin.TabularInline):
     model = ReturnItem
     extra = 0
-    fields = ('product', 'quantity', 'reason', 'condition')
+    fields = ('product', 'size', 'color', 'fabric', 'quantity', 'reason', 'condition')
 
 class ReturnLogInline(admin.TabularInline):
     model = ReturnLog

@@ -3,7 +3,7 @@ from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from .models import Category, Product, ProductMedia, SEO
+from .models import Category, Product, ProductMedia, SEO, FabricColor
 
 @receiver(pre_save, sender=Category)
 def ensure_category_slug(sender, instance, **kwargs):
@@ -74,3 +74,13 @@ def delete_product_seo(sender, instance, **kwargs):
 def delete_category_seo(sender, instance, **kwargs):
     """Delete SEO entry when category is deleted."""
     SEO.objects.filter(entity_type='Category', entity_id=instance.id).delete()
+
+@receiver(post_save, sender=FabricColor)
+def sync_fabric_color_relationships(sender, instance, created, **kwargs):
+    """
+    When a fabric-color relationship is created, make sure the relationship
+    is reflected in the Color.fabrics ManyToMany relation
+    """
+    if created:
+        # Add the fabric to the color's fabrics if it's not already there
+        instance.color.fabrics.add(instance.fabric)

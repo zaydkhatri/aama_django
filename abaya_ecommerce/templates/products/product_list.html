@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 
 {% load static %}
-{% load currency_filters %}
-{% load custom_tags %}
 
 {% block title %}Shop Modest Fashion | Abaya Elegance{% endblock %}
 
@@ -39,13 +37,13 @@
                         <ul class="category-list">
                             <li>
                                 <a href="{% url 'product_list' %}" {% if not request.GET.category %}class="active"{% endif %}>
-                                    All Products <span>{{ all_products_count }}</span>
+                                    All Products <span>({{ all_products_count }})</span>
                                 </a>
                             </li>
                             {% for category in categories %}
                             <li>
                                 <a href="{% url 'category_detail' category.slug %}" {% if request.GET.category == category.id|stringformat:'s' %}class="active"{% endif %}>
-                                    {{ category.name }} <span>{{ category.get_all_products.count }}</span>
+                                    {{ category.name }} <span>({{ category.get_all_products.count }})</span>
                                 </a>
                             </li>
                             {% endfor %}
@@ -79,47 +77,76 @@
                         </form>
                     </div>
                     
-                    <!-- Attributes Widget -->
-                    {% if attributes %}
-                    <form method="get" action="{% url 'product_list' %}">
-                        {% if request.GET.category %}
-                        <input type="hidden" name="category" value="{{ request.GET.category }}">
-                        {% endif %}
-                        {% if request.GET.q %}
-                        <input type="hidden" name="q" value="{{ request.GET.q }}">
-                        {% endif %}
-                        {% if request.GET.min_price %}
-                        <input type="hidden" name="min_price" value="{{ request.GET.min_price }}">
-                        {% endif %}
-                        {% if request.GET.max_price %}
-                        <input type="hidden" name="max_price" value="{{ request.GET.max_price }}">
-                        {% endif %}
-                        {% if request.GET.sort %}
-                        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
-                        {% endif %}
-                        
-                        {% for attribute in attributes %}
-                        <div class="sidebar-widget mb-4">
-                            <h4 class="sidebar-title">{{ attribute.name }}</h4>
+                    <!-- Size Filter Widget -->
+                    <div class="sidebar-widget mb-4">
+                        <h4 class="sidebar-title">Size</h4>
+                        <form method="get" action="{% url 'product_list' %}">
+                            {% if request.GET.category %}
+                            <input type="hidden" name="category" value="{{ request.GET.category }}">
+                            {% endif %}
+                            {% if request.GET.q %}
+                            <input type="hidden" name="q" value="{{ request.GET.q }}">
+                            {% endif %}
+                            {% if request.GET.min_price %}
+                            <input type="hidden" name="min_price" value="{{ request.GET.min_price }}">
+                            {% endif %}
+                            {% if request.GET.max_price %}
+                            <input type="hidden" name="max_price" value="{{ request.GET.max_price }}">
+                            {% endif %}
+                            {% if request.GET.sort %}
+                            <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                            {% endif %}
+                            
                             <div class="attribute-filter">
-                                {% for value in attribute.values.all %}
+                                {% for size in sizes %}
                                 <div class="filter-checkbox">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="attribute_{{ attribute.id }}" value="{{ value.id }}" id="attr_{{ value.id }}" 
-                                            {% if value.id|stringformat:'s' in request.GET.getlist|stringformat:'s' %}checked{% endif %}>
-                                        <label class="form-check-label" for="attr_{{ value.id }}">
-                                            {{ value.value }}
+                                        <input class="form-check-input" type="checkbox" name="size_id" value="{{ size.id }}" id="size_{{ size.id }}" 
+                                            {% if size.id|stringformat:'s' == request.GET.size_id %}checked{% endif %}>
+                                        <label class="form-check-label" for="size_{{ size.id }}">
+                                            {{ size.name }}
                                         </label>
                                     </div>
                                 </div>
                                 {% endfor %}
                             </div>
-                        </div>
-                        {% endfor %}
-                        
-                        <button type="submit" class="btn btn-primary btn-sm w-100 mb-4">Apply Filters</button>
-                    </form>
-                    {% endif %}
+                            
+                            <!-- Color Filter -->
+                            <h4 class="sidebar-title mt-4">Color</h4>
+                            <div class="attribute-filter">
+                                {% for color in colors %}
+                                <div class="filter-checkbox">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="color_id" value="{{ color.id }}" id="color_{{ color.id }}" 
+                                            {% if color.id|stringformat:'s' == request.GET.color_id %}checked{% endif %}>
+                                        <label class="form-check-label" for="color_{{ color.id }}">
+                                            <span class="color-swatch" style="display: inline-block; width: 15px; height: 15px; background-color: {{ color.color_code }}; margin-right: 5px; border-radius: 3px;"></span>
+                                            {{ color.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Fabric Filter -->
+                            <h4 class="sidebar-title mt-4">Fabric</h4>
+                            <div class="attribute-filter">
+                                {% for fabric in fabrics %}
+                                <div class="filter-checkbox">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="fabric_id" value="{{ fabric.id }}" id="fabric_{{ fabric.id }}" 
+                                            {% if fabric.id|stringformat:'s' == request.GET.fabric_id %}checked{% endif %}>
+                                        <label class="form-check-label" for="fabric_{{ fabric.id }}">
+                                            {{ fabric.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-sm w-100 mt-4">Apply Filters</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             
@@ -144,6 +171,15 @@
                             {% endif %}
                             {% if request.GET.max_price %}
                             <input type="hidden" name="max_price" value="{{ request.GET.max_price }}">
+                            {% endif %}
+                            {% if request.GET.size_id %}
+                            <input type="hidden" name="size_id" value="{{ request.GET.size_id }}">
+                            {% endif %}
+                            {% if request.GET.color_id %}
+                            <input type="hidden" name="color_id" value="{{ request.GET.color_id }}">
+                            {% endif %}
+                            {% if request.GET.fabric_id %}
+                            <input type="hidden" name="fabric_id" value="{{ request.GET.fabric_id }}">
                             {% endif %}
                             
                             <select name="sort" class="form-select" onchange="document.getElementById('sort-form').submit();">
@@ -172,7 +208,7 @@
                     <div class="col-lg-4 col-md-4 col-6">
                         <div class="product-card">
                             <div class="product-image">
-                                {% if product.is_in_stock %}
+                                {% if product.is_active %}
                                 {% if product.sale_price %}
                                 <div class="product-badges">
                                     <span class="product-badge badge-sale">
@@ -182,7 +218,7 @@
                                 {% endif %}
                                 {% else %}
                                 <div class="product-badges">
-                                    <span class="product-badge badge-out">Out of Stock</span>
+                                    <span class="product-badge badge-out">Not Available</span>
                                 </div>
                                 {% endif %}
                                 
@@ -236,21 +272,14 @@
                                     {% endwith %}
                                 </div>
                                 
-                                <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="product_id" value="{{ product.id }}">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
-                                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                                    </button>
-                                </form>
+                                <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary w-100">View Details</a>
                             </div>
                         </div>
                     </div>
                     {% empty %}
                     <div class="col-12 text-center py-5">
                         <p>No products found matching your criteria.</p>
-                        {% if query or request.GET.min_price or request.GET.max_price %}
+                        {% if query or request.GET.min_price or request.GET.max_price or request.GET.size_id or request.GET.color_id or request.GET.fabric_id %}
                         <a href="{% url 'product_list' %}" class="btn btn-primary mt-3">Clear Filters</a>
                         {% endif %}
                     </div>
@@ -264,7 +293,7 @@
                         <ul class="pagination pagination-custom justify-content-center">
                             {% if products.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
+                                <a class="page-link" href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
                                     <span aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
                                 </a>
                             </li>
@@ -278,13 +307,13 @@
                             {% if num == products.number %}
                             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                             {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
-                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
                             {% endif %}
                             {% endfor %}
                             
                             {% if products.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
+                                <a class="page-link" href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
                                     <span aria-hidden="true"><i class="fas fa-chevron-right"></i></span>
                                 </a>
                             </li>
@@ -316,7 +345,7 @@
                 <div class="swiper-slide">
                     <div class="product-card">
                         <div class="product-image">
-                            {% if product.is_in_stock %}
+                            {% if product.is_active %}
                             {% if product.sale_price %}
                             <div class="product-badges">
                                 <span class="product-badge badge-sale">
@@ -326,7 +355,7 @@
                             {% endif %}
                             {% else %}
                             <div class="product-badges">
-                                <span class="product-badge badge-out">Out of Stock</span>
+                                <span class="product-badge badge-out">Not Available</span>
                             </div>
                             {% endif %}
                             
@@ -366,14 +395,7 @@
                                 {% endwith %}
                             </div>
                             
-                            <form action="{% url 'add_to_cart' %}" method="post" class="add-to-cart-form">
-                                {% csrf_token %}
-                                <input type="hidden" name="product_id" value="{{ product.id }}">
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="btn btn-primary add-to-cart" {% if not product.is_in_stock %}disabled{% endif %}>
-                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                                </button>
-                            </form>
+                            <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary w-100">View Details</a>
                         </div>
                     </div>
                 </div>
@@ -446,6 +468,10 @@
     .search-results p {
         color: var(--gray-color);
         font-size: 0.875rem;
+    }
+    
+    .color-swatch {
+        border: 1px solid #ddd;
     }
 </style>
 {% endblock %}

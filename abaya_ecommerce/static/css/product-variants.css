@@ -1,0 +1,167 @@
+/* Static/css/product-variants.css */
+
+/* Size Selection Styles */
+.product-detail-sizes,
+.product-detail-fabrics,
+.product-detail-colors {
+    margin-bottom: 25px;
+}
+
+.product-detail-label {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.size-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.size-option {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--light-gray);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.size-option:hover,
+.size-option.active {
+    border-color: var(--primary-color);
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+/* Color Selection Styles */
+.color-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--light-gray);
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+}
+
+.color-option.active {
+    border: 2px solid var(--primary-color);
+    transform: scale(1.1);
+}
+
+/* For colors with no color code (pattern/image) */
+.color-option.pattern {
+    background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+        linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+}
+
+/* For light colored options, ensure visibility */
+.color-option.light {
+    border: 1px solid #ddd;
+}
+
+/* Fabric Selection Styles */
+.product-detail-fabrics select {
+    height: 45px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--light-gray);
+}
+
+.product-detail-fabrics select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(161, 184, 192, 0.25);
+}
+
+/* Quantity Input Styles */
+.quantity-input {
+    display: flex;
+    align-items: center;
+    width: 120px;
+    border: 1px solid var(--light-gray);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.quantity-btn {
+    width: 30px;
+    height: 40px;
+    border: none;
+    background-color: transparent;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-color);
+    transition: var(--transition);
+}
+
+.quantity-btn:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.quantity-input input {
+    width: 60px;
+    height: 40px;
+    border: none;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Preview Text for Selected Variants */
+.selected-variant-preview {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--gray-color);
+}
+
+.selected-variant-preview span {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+/* Error Messages */
+.variant-error {
+    color: var(--danger-color);
+    font-size: 0.875rem;
+    margin-top: 5px;
+    display: none;
+}
+
+.variant-error.show {
+    display: block;
+}
+
+/* Product Meta Item Display */
+.product-meta-item {
+    margin-bottom: 10px;
+    display: flex;
+}
+
+.product-meta-label {
+    width: 120px;
+    font-weight: 500;
+}
+
+.product-meta-info {
+    flex: 1;
+}
+
+.product-meta-info .badge {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}

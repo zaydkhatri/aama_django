@@ -3,6 +3,8 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from users.models import Address
 from .models import Order, Return, ReturnItem
+from products.models import Size, Color, Fabric
+
 class CheckoutForm(forms.Form):
     # Customer Information
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -181,9 +183,12 @@ class ReturnForm(forms.ModelForm):
 class ReturnItemForm(forms.ModelForm):
     class Meta:
         model = ReturnItem
-        fields = ['product', 'quantity', 'reason', 'condition']
+        fields = ['product', 'size', 'color', 'fabric', 'quantity', 'reason', 'condition']
         widgets = {
             'product': forms.HiddenInput(),
+            'size': forms.HiddenInput(),
+            'color': forms.HiddenInput(),
+            'fabric': forms.HiddenInput(),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'condition': forms.TextInput(attrs={'class': 'form-control'}),

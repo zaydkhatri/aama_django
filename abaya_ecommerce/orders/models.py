@@ -7,7 +7,7 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from products.models import Product, Currency
+from products.models import Product, Currency, Size, Color, Fabric
 
 User = get_user_model()
 
@@ -101,6 +101,9 @@ class OrderItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    size = models.ForeignKey(Size, on_delete=models.PROTECT, null=True, blank=True)
+    color = models.ForeignKey(Color, on_delete=models.PROTECT, null=True, blank=True)
+    fabric = models.ForeignKey(Fabric, on_delete=models.PROTECT, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=10, decimal_places=2)
@@ -111,7 +114,16 @@ class OrderItem(models.Model):
         verbose_name_plural = 'Order Items'
     
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in order {self.order.order_number}"
+        variant_info = []
+        if self.size:
+            variant_info.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_info.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_info.append(f"Fabric: {self.fabric.name}")
+            
+        variant_str = f" ({', '.join(variant_info)})" if variant_info else ""
+        return f"{self.quantity} x {self.product.name}{variant_str} in order {self.order.order_number}"
     
     def save(self, *args, **kwargs):
         # Update total before saving
@@ -123,14 +135,26 @@ class OrderItem(models.Model):
 
         # Add these methods to the OrderItem model in orders/models.py
 
+    def get_variant_display(self):
+        """Get a display string for the product variant (size, color, fabric)"""
+        variant_parts = []
+        if self.size:
+            variant_parts.append(f"Size: {self.size.name}")
+        if self.color:
+            variant_parts.append(f"Color: {self.color.name}")
+        if self.fabric:
+            variant_parts.append(f"Fabric: {self.fabric.name}")
+            
+        if not variant_parts:
+            return ""
+            
+        return " / ".join(variant_parts)
+
     def get_unit_price_display(self):
         """Get the formatted unit price with currency symbol."""
-        # Get the default currency and the selected currency
-        from products.models import Currency
-        from core.middleware import get_current_request
-        from core.currency_utils import convert_price, format_price
+        from core.currency_utils import convert_price, format_price, get_selected_currency_from_request
         
-        # Get default currency
+        # Get default currency and selected currency
         try:
             default_currency = Currency.objects.get(is_default=True)
         except Currency.DoesNotExist:
@@ -139,22 +163,12 @@ class OrderItem(models.Model):
         # Try to get the selected currency
         selected_currency = None
         try:
-            request = get_current_request()
-            if request and request.session.get('currency_code'):
-                try:
-                    selected_currency = Currency.objects.get(
-                        code=request.session['currency_code'],
-                        is_active=True
-                    )
-                except Currency.DoesNotExist:
-                    selected_currency = default_currency
-            else:
-                selected_currency = default_currency
+            selected_currency = get_selected_currency_from_request()
         except:
             selected_currency = default_currency
         
         # Convert price if needed
-        price = self.unit_price
+        price = self.price
         if default_currency and selected_currency and default_currency.id != selected_currency.id:
             price = convert_price(price, default_currency, selected_currency)
         
@@ -163,12 +177,9 @@ class OrderItem(models.Model):
 
     def get_total_display(self):
         """Get the formatted total price with currency symbol."""
-        # Get the default currency and the selected currency
-        from products.models import Currency
-        from core.middleware import get_current_request
-        from core.currency_utils import convert_price, format_price
+        from core.currency_utils import convert_price, format_price, get_selected_currency_from_request
         
-        # Get default currency
+        # Get default currency and selected currency
         try:
             default_currency = Currency.objects.get(is_default=True)
         except Currency.DoesNotExist:
@@ -177,17 +188,7 @@ class OrderItem(models.Model):
         # Try to get the selected currency
         selected_currency = None
         try:
-            request = get_current_request()
-            if request and request.session.get('currency_code'):
-                try:
-                    selected_currency = Currency.objects.get(
-                        code=request.session['currency_code'],
-                        is_active=True
-                    )
-                except Currency.DoesNotExist:
-                    selected_currency = default_currency
-            else:
-                selected_currency = default_currency
+            selected_currency = get_selected_currency_from_request()
         except:
             selected_currency = default_currency
         
@@ -635,6 +636,9 @@ class ReturnItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     return_request = models.ForeignKey(Return, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='return_items')
+    size = models.ForeignKey(Size, on_delete=models.PROTECT, null=True, blank=True)
+    color = models.ForeignKey(Color, on_delete=models.PROTECT, null=True, blank=True)
+    fabric = models.ForeignKey(Fabric, on_delete=models.PROTECT, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     reason = models.TextField(blank=True, null=True)
     condition = models.CharField(max_length=100, blank=True, null=True)
