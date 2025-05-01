@@ -48,9 +48,16 @@ class ProductFabricInline(admin.TabularInline):
 
 class ProductSizeInline(admin.TabularInline):
     model = ProductSize
-    extra = 1
+    extra = 0
     verbose_name = _('Size')
     verbose_name_plural = _('Sizes')
+    # Make fields read-only to prevent manual removal but still show associations
+    readonly_fields = ('size',)
+    can_delete = False  # Prevent deletion of associations
+    
+    def has_add_permission(self, request, obj=None):
+        # Disable the add button since sizes are auto-assigned
+        return False
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'sku', 'price', 'sale_price', 'is_active', 'is_featured', 'created_at')
@@ -88,6 +95,21 @@ class SizeAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'created_at')
     search_fields = ('name',)
     ordering = ['sort_order', 'name']
+    
+    def save_model(self, request, obj, form, change):
+        """Override save_model to ensure new sizes get associated with all products"""
+        is_new = obj.pk is None
+        super().save_model(request, obj, form, change)
+        
+        # If this is a new size, associate it with all products
+        if is_new:
+            from products.models import Product, ProductSize
+            products = Product.objects.filter(is_active=True)
+            for product in products:
+                ProductSize.objects.get_or_create(
+                    product=product,
+                    size=obj
+                )
 
 class FabricColorInline(admin.TabularInline):
     model = FabricColor

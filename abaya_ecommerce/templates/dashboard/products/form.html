@@ -1,0 +1,289 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if product %}Edit Product: {{ product.name }}{% else %}Add New Product{% endif %} - Admin Dashboard{% endblock %}
+
+{% block page_title %}{% if product %}Edit Product{% else %}Add New Product{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">{% if product %}Edit Product: {{ product.name }}{% else %}Add New Product{% endif %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post" enctype="multipart/form-data" x-data="{ hasSalePrice: {% if form.sale_price.value %}true{% else %}false{% endif %} }">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="mb-8">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">Basic Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Name Field -->
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Product Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" value="{{ form.name.value|default:'' }}" required
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                               {% if form.name.errors %}border-red-500{% endif %}">
+                        {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- SKU Field -->
+                    <div>
+                        <label for="{{ form.sku.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            SKU <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="{{ form.sku.name }}" id="{{ form.sku.id_for_label }}" value="{{ form.sku.value|default:'' }}" required
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                               {% if form.sku.errors %}border-red-500{% endif %}">
+                        {% if form.sku.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.sku.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Slug Field -->
+                    <div>
+                        <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Slug
+                        </label>
+                        <div class="flex">
+                            <input type="text" name="{{ form.slug.name }}" id="{{ form.slug.id_for_label }}" value="{{ form.slug.value|default:'' }}"
+                                  class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                  {% if form.slug.errors %}border-red-500{% endif %}">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Leave empty to auto-generate from name.</p>
+                        {% if form.slug.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.slug.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Description Field -->
+                <div class="mt-4">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Product Description
+                    </label>
+                    <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="5"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                             {% if form.description.errors %}border-red-500{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Pricing Information -->
+            <div class="mb-8">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">Pricing Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Regular Price Field -->
+                    <div>
+                        <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Regular Price <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}" value="{{ form.price.value|default:'' }}" required
+                                   step="0.01" min="0"
+                                   class="pl-7 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.price.errors %}border-red-500{% endif %}">
+                        </div>
+                        {% if form.price.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.price.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Sale Price Toggle -->
+                    <div>
+                        <div class="flex items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Sale Price</label>
+                            <div class="ml-2 relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" x-model="hasSalePrice" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                                <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+                        
+                        <!-- Sale Price Field (conditional) -->
+                        <div x-show="hasSalePrice" x-transition>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">₹</span>
+                                </div>
+                                <input type="number" name="{{ form.sale_price.name }}" id="{{ form.sale_price.id_for_label }}" value="{{ form.sale_price.value|default:'' }}"
+                                       step="0.01" min="0"
+                                       class="pl-7 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                       {% if form.sale_price.errors %}border-red-500{% endif %}">
+                            </div>
+                            {% if form.sale_price.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.sale_price.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Product Status -->
+            <div class="mb-8">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">Product Status</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Is Active -->
+                    <div class="flex items-center">
+                        <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                               {% if form.is_active.value %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                            Active (Product will be visible on site)
+                        </label>
+                    </div>
+                    
+                    <!-- Is Featured -->
+                    <div class="flex items-center">
+                        <input type="checkbox" name="{{ form.is_featured.name }}" id="{{ form.is_featured.id_for_label }}" 
+                               {% if form.is_featured.value %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="{{ form.is_featured.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                            Featured (Product will be highlighted on site)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Categories -->
+            <div class="mb-8">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">Categories</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-md p-4 max-h-64 overflow-y-auto">
+                    {% for category in form.categories.field.queryset %}
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox" name="{{ form.categories.name }}" id="category_{{ category.id }}" value="{{ category.id }}"
+                                   {% if category.id|stringformat:"s" in form.categories.value|stringformat:"s" %}checked{% endif %}
+                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="category_{{ category.id }}" class="text-gray-700">{{ category.name }}</label>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-3 text-center py-4 text-gray-500">
+                        No categories found. <a href="{% url 'dashboard:category_create' %}" class="text-indigo-600 hover:text-indigo-900">Create one first</a>.
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if form.categories.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.categories.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Fabrics -->
+            <div class="mb-8">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">Fabrics</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 rounded-md p-4 max-h-64 overflow-y-auto">
+                    {% for fabric in form.fabrics.field.queryset %}
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox" name="{{ form.fabrics.name }}" id="fabric_{{ fabric.id }}" value="{{ fabric.id }}"
+                                   {% if fabric.id|stringformat:"s" in form.fabrics.value|stringformat:"s" %}checked{% endif %}
+                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="fabric_{{ fabric.id }}" class="text-gray-700">{{ fabric.name }}</label>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-3 text-center py-4 text-gray-500">
+                        No fabrics found. <a href="{% url 'dashboard:fabric_create' %}" class="text-indigo-600 hover:text-indigo-900">Create one first</a>.
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if form.fabrics.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.fabrics.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- SEO Information -->
+            <div class="mb-8">
+                <h3 class="text-base font-semibold text-gray-800 mb-4">SEO Information</h3>
+                
+                <div class="space-y-4">
+                    <!-- Meta Title -->
+                    <div>
+                        <label for="{{ form.meta_title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Meta Title
+                        </label>
+                        <input type="text" name="{{ form.meta_title.name }}" id="{{ form.meta_title.id_for_label }}" value="{{ form.meta_title.value|default:'' }}"
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                               {% if form.meta_title.errors %}border-red-500{% endif %}">
+                        <p class="mt-1 text-xs text-gray-500">Leave empty to use product name.</p>
+                        {% if form.meta_title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.meta_title.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Meta Description -->
+                    <div>
+                        <label for="{{ form.meta_description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Meta Description
+                        </label>
+                        <textarea name="{{ form.meta_description.name }}" id="{{ form.meta_description.id_for_label }}" rows="2"
+                                 class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                 {% if form.meta_description.errors %}border-red-500{% endif %}">{{ form.meta_description.value|default:'' }}</textarea>
+                        <p class="mt-1 text-xs text-gray-500">Brief description for search engines.</p>
+                        {% if form.meta_description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.meta_description.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Meta Keywords -->
+                    <div>
+                        <label for="{{ form.meta_keywords.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Meta Keywords
+                        </label>
+                        <input type="text" name="{{ form.meta_keywords.name }}" id="{{ form.meta_keywords.id_for_label }}" value="{{ form.meta_keywords.value|default:'' }}"
+                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                               {% if form.meta_keywords.errors %}border-red-500{% endif %}">
+                        <p class="mt-1 text-xs text-gray-500">Comma-separated keywords (less important for SEO nowadays).</p>
+                        {% if form.meta_keywords.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.meta_keywords.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="pt-5 border-t border-gray-200">
+                <div class="flex justify-end">
+                    <a href="{% if product %}{% url 'dashboard:product_detail' uuid=product.id %}{% else %}{% url 'dashboard:product_list' %}{% endif %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% if product %}Update Product{% else %}Create Product{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4c51bf;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+        background-color: #4c51bf;
+    }
+</style>
+{% endblock %}

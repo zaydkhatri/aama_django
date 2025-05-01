@@ -1,0 +1,132 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if fabric %}Edit Fabric: {{ fabric.name }}{% else %}Add New Fabric{% endif %} - Admin Dashboard{% endblock %}
+
+{% block page_title %}{% if fabric %}Edit Fabric{% else %}Add New Fabric{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">{% if fabric %}Edit Fabric: {{ fabric.name }}{% else %}Add New Fabric{% endif %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Name Field -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Fabric Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" value="{{ form.name.value|default:'' }}" required
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                           {% if form.name.errors %}border-red-500{% endif %}">
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Example: Cotton, Silk, Chiffon, etc.</p>
+                </div>
+                
+                <!-- Description Field -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                    </label>
+                    <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="3"
+                             class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                             {% if form.description.errors %}border-red-500{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Optional: Provide details about this fabric type.</p>
+                </div>
+                
+                <!-- Active Field -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                               {% if form.is_active.value %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">Active</label>
+                        <p class="text-gray-500">Inactive fabrics won't be available for selection when creating products.</p>
+                    </div>
+                </div>
+                
+                <!-- Available Colors -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Available Colors
+                    </label>
+                    <div class="border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                            {% for color in form.colors.field.queryset %}
+                            <div class="relative flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input type="checkbox" name="{{ form.colors.name }}" id="color_{{ color.id }}" value="{{ color.id }}"
+                                           {% if color.id|stringformat:"s" in form.colors.value|stringformat:"s" %}checked{% endif %}
+                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3 text-sm flex items-center">
+                                    <label for="color_{{ color.id }}" class="font-medium text-gray-700">{{ color.name }}</label>
+                                    {% if color.color_code %}
+                                    <div class="w-4 h-4 rounded ml-2" style="background-color: {{ color.color_code }};"></div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-span-3 text-sm text-gray-500 text-center py-4">
+                                No colors available. <a href="{% url 'dashboard:color_create' %}" class="text-indigo-600 hover:text-indigo-900">Create colors first</a>.
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if form.colors.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.colors.errors|join:", " }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Select which colors are available for this fabric.</p>
+                </div>
+                
+                {% if fabric %}
+                <!-- Product Count Info (for edit mode) -->
+                <div class="rounded-md bg-blue-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fa-solid fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3 flex-1 md:flex md:justify-between">
+                            <p class="text-sm text-blue-700">
+                                This fabric is currently associated with <strong>{{ product_count }}</strong> products.
+                            </p>
+                            {% if product_count > 0 %}
+                            <p class="mt-3 text-sm md:mt-0 md:ml-6">
+                                <a href="{% url 'dashboard:product_list' %}" class="whitespace-nowrap font-medium text-blue-700 hover:text-blue-600">
+                                    View products <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="pt-6 border-t border-gray-200 mt-6">
+                <div class="flex justify-end">
+                    <a href="{% url 'dashboard:fabric_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% if fabric %}Update Fabric{% else %}Create Fabric{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

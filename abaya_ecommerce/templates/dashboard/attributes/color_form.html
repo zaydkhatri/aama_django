@@ -1,0 +1,212 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if color %}Edit Color: {{ color.name }}{% else %}Add New Color{% endif %} - Admin Dashboard{% endblock %}
+
+{% block page_title %}{% if color %}Edit Color{% else %}Add New Color{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">{% if color %}Edit Color: {{ color.name }}{% else %}Add New Color{% endif %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Name Field -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Color Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" value="{{ form.name.value|default:'' }}" required
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                           {% if form.name.errors %}border-red-500{% endif %}">
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Example: Red, Blue, Navy, Floral Pattern, etc.</p>
+                </div>
+                
+                <!-- Color Picker -->
+                <div x-data="{ hasColorCode: {% if form.color_code.value and form.color_code.value != '' %}true{% else %}false{% endif %} }">
+                    <div class="flex items-center mb-2">
+                        <label for="{{ form.color_code.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Color Code
+                        </label>
+                        <div class="ml-2 relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" x-model="hasColorCode" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                            <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    
+                    <div x-show="hasColorCode" x-transition>
+                        <div class="flex gap-4 items-center">
+                            <input type="color" name="{{ form.color_code.name }}" id="{{ form.color_code.id_for_label }}" value="{{ form.color_code.value|default:'#ffffff' }}"
+                                   class="h-10 w-20 border-gray-300 rounded-md
+                                   {% if form.color_code.errors %}border-red-500{% endif %}">
+                            
+                            <div class="flex-1">
+                                <input type="text" x-bind:value="document.getElementById('{{ form.color_code.id_for_label }}').value" disabled
+                                       class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50">
+                            </div>
+                        </div>
+                        {% if form.color_code.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.color_code.errors|join:", " }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Select a color using the color picker or enter a valid hex color code (e.g., #FF5733).</p>
+                    </div>
+                </div>
+                
+                <!-- Pattern Image Upload -->
+                <div x-data="{ hasImage: {% if color and color.image %}true{% else %}false{% endif %} }">
+                    <div class="flex items-center mb-2">
+                        <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Pattern Image
+                        </label>
+                        <div class="ml-2 relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" x-model="hasImage" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                            <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    
+                    <div x-show="hasImage" x-transition>
+                        <div class="flex gap-4 items-start">
+                            <div class="w-20 h-20 border border-gray-300 rounded-md overflow-hidden bg-gray-100">
+                                {% if color and color.image %}
+                                <img src="{{ color.image.url }}" alt="{{ color.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="flex items-center justify-center h-full">
+                                    <i class="fa-solid fa-image text-gray-400 text-xl"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-1">
+                                <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100
+                                       {% if form.image.errors %}border-red-500{% endif %}">
+                                {% if form.image.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.image.errors|join:", " }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-gray-500">Upload an image for patterns or complex colors. Recommended size: 200x200px.</p>
+                                
+                                {% if color and color.image %}
+                                <div class="mt-2 flex items-center">
+                                    <input type="checkbox" name="remove_image" id="remove_image" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                    <label for="remove_image" class="ml-2 block text-sm text-red-600">
+                                        Remove current image
+                                    </label>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Active Field -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                               {% if form.is_active.value %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">Active</label>
+                        <p class="text-gray-500">Inactive colors won't be available for selection.</p>
+                    </div>
+                </div>
+                
+                {% if color and fabrics %}
+                <!-- Associated Fabrics (for edit mode) -->
+                <div class="rounded-md bg-blue-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fa-solid fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Associated Fabrics</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p>This color is associated with the following fabrics:</p>
+                                <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                    {% for fabric in fabrics %}
+                                    <div class="px-2 py-1 bg-white rounded-md text-sm">{{ fabric.name }}</div>
+                                    {% empty %}
+                                    <div class="col-span-4 text-sm">No fabrics associated.</div>
+                                    {% endfor %}
+                                </div>
+                                <p class="mt-2">To associate this color with fabrics, edit the fabric and select this color.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="pt-6 border-t border-gray-200 mt-6">
+                <div class="flex justify-end">
+                    <a href="{% url 'dashboard:color_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% if color %}Update Color{% else %}Create Color{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4c51bf;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+        background-color: #4c51bf;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update hex input when color picker changes
+        const colorPicker = document.getElementById('{{ form.color_code.id_for_label }}');
+        if (colorPicker) {
+            colorPicker.addEventListener('input', function() {
+                const hexInput = document.querySelector('[x-bind\\:value]');
+                if (hexInput) {
+                    hexInput.value = this.value;
+                }
+            });
+        }
+        
+        // Preview uploaded image
+        const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                const previewContainer = this.closest('div').previousElementSibling;
+                if (previewContainer && this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-full h-full object-cover';
+                        
+                        // Clear container and add new image
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

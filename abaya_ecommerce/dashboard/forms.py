@@ -1,28 +1,16 @@
+# dashboard/forms.py
 from django import forms
-from products.models import Category, Product, Size, Color, Fabric, ProductMedia
-from orders.models import Order, OrderItem, Return
-from users.models import User, Address
-from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext_lazy as _
+from django.core.files.images import get_image_dimensions
 
-
-class DashboardLoginForm(AuthenticationForm):
-    """Custom login form for dashboard"""
-    username = forms.EmailField(
-        label=_("Email"),
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Email address'})
-    )
-    password = forms.CharField(
-        label=_("Password"),
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
-    )
-
+from products.models import Category, Product, Size, Color, Fabric, ProductMedia, Currency
+from users.models import User, Address
+from orders.models import Order, Coupon
 
 class CategoryForm(forms.ModelForm):
-    """Form for Category management"""
     class Meta:
         model = Category
-        fields = ['name', 'slug', 'description', 'parent', 'is_active', 'image',
+        fields = ['name', 'slug', 'description', 'parent', 'is_active', 'image', 
                   'meta_title', 'meta_description', 'meta_keywords']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -30,45 +18,51 @@ class CategoryForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'parent': forms.Select(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'meta_title': forms.TextInput(attrs={'class': 'form-control'}),
             'meta_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'meta_keywords': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            # Check image dimensions
+            width, height = get_image_dimensions(image)
+            if width > 2000 or height > 2000:
+                raise forms.ValidationError("Image dimensions are too large. Maximum dimensions are 2000x2000 pixels.")
+            # Check file size
+            if image.size > 2 * 1024 * 1024:  # 2MB
+                raise forms.ValidationError("Image file is too large. Maximum size is 2MB.")
+        return image
 
 
 class ProductForm(forms.ModelForm):
-    """Form for Product management"""
     categories = forms.ModelMultipleChoiceField(
         queryset=Category.objects.filter(is_active=True),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
         required=True
     )
-    sizes = forms.ModelMultipleChoiceField(
-        queryset=Size.objects.filter(is_active=True),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
-        required=False
-    )
+    
     fabrics = forms.ModelMultipleChoiceField(
         queryset=Fabric.objects.filter(is_active=True),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
-        required=False
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=True
     )
     
     class Meta:
         model = Product
-        fields = ['name', 'slug', 'description', 'sku', 'is_active', 'is_featured',
-                  'price', 'sale_price', 'categories', 'sizes', 'fabrics',
-                  'meta_title', 'meta_description', 'meta_keywords']
+        fields = ['name', 'slug', 'sku', 'description', 'price', 'sale_price', 
+                 'is_active', 'is_featured', 'meta_title', 'meta_description', 'meta_keywords']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'slug': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control richtext', 'rows': 4}),
             'sku': forms.TextInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'sale_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'meta_title': forms.TextInput(attrs={'class': 'form-control'}),
             'meta_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'meta_keywords': forms.TextInput(attrs={'class': 'form-control'}),
@@ -76,50 +70,27 @@ class ProductForm(forms.ModelForm):
 
 
 class ProductMediaForm(forms.ModelForm):
-    """Form for Product Media management"""
     class Meta:
         model = ProductMedia
-        fields = ['file', 'type', 'alt', 'is_default', 'sort_order']
+        fields = ['file', 'alt', 'type', 'is_default', 'sort_order']
         widgets = {
-            'file': forms.FileInput(attrs={'class': 'form-control'}),
-            'type': forms.Select(attrs={'class': 'form-control'}),
+            'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'alt': forms.TextInput(attrs={'class': 'form-control'}),
+            'type': forms.Select(attrs={'class': 'form-control'}),
             'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'sort_order': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
-
-class ProductVariantForm(forms.Form):
-    """Form for managing product variants (sizes, colors, fabrics)"""
-    product = forms.ModelChoiceField(
-        queryset=Product.objects.filter(is_active=True),
-        widget=forms.HiddenInput()
-    )
-    size = forms.ModelChoiceField(
-        queryset=Size.objects.filter(is_active=True),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        required=False
-    )
-    fabric = forms.ModelChoiceField(
-        queryset=Fabric.objects.filter(is_active=True),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        required=False
-    )
-    colors = forms.ModelMultipleChoiceField(
-        queryset=Color.objects.filter(is_active=True),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control select2'}),
-        required=False,
-        help_text='Select colors available for this fabric'
-    )
-    is_default = forms.BooleanField(
-        required=False, 
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        help_text='Set as default fabric'
-    )
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if file:
+            # Check file size
+            if file.size > 5 * 1024 * 1024:  # 5MB
+                raise forms.ValidationError("File is too large. Maximum size is 5MB.")
+        return file
 
 
 class SizeForm(forms.ModelForm):
-    """Form for Size management"""
     class Meta:
         model = Size
         fields = ['name', 'sort_order', 'is_active']
@@ -130,22 +101,13 @@ class SizeForm(forms.ModelForm):
         }
 
 
-class ColorForm(forms.ModelForm):
-    """Form for Color management"""
-    class Meta:
-        model = Color
-        fields = ['name', 'color_code', 'image', 'is_active', 'fabrics']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'color_code': forms.TextInput(attrs={'class': 'form-control colorpicker'}),
-            'image': forms.FileInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'fabrics': forms.SelectMultiple(attrs={'class': 'form-control select2'}),
-        }
-
-
 class FabricForm(forms.ModelForm):
-    """Form for Fabric management"""
+    colors = forms.ModelMultipleChoiceField(
+        queryset=Color.objects.filter(is_active=True),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=False
+    )
+    
     class Meta:
         model = Fabric
         fields = ['name', 'description', 'is_active']
@@ -156,71 +118,138 @@ class FabricForm(forms.ModelForm):
         }
 
 
-class OrderEditForm(forms.ModelForm):
-    """Form for Order editing"""
+class ColorForm(forms.ModelForm):
     class Meta:
-        model = Order
-        fields = ['status', 'payment_status', 'shipping_amount', 'tax_amount', 
-                  'discount_amount', 'notes']
+        model = Color
+        fields = ['name', 'color_code', 'image', 'is_active']
         widgets = {
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'payment_status': forms.Select(attrs={'class': 'form-control'}),
-            'shipping_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'tax_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'discount_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'color_code': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class CurrencyForm(forms.ModelForm):
+    class Meta:
+        model = Currency
+        fields = ['code', 'name', 'symbol', 'exchange_rate', 'is_default', 'is_active']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'symbol': forms.TextInput(attrs={'class': 'form-control'}),
+            'exchange_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class CouponForm(forms.ModelForm):
+    class Meta:
+        model = Coupon
+        fields = ['code', 'type', 'value', 'min_order_amount', 'max_discount_amount',
+                 'start_date', 'end_date', 'usage_limit', 'is_active', 'description']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'type': forms.Select(attrs={'class': 'form-control'}),
+            'value': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'min_order_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'max_discount_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'start_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'end_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'usage_limit': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 
 class OrderStatusForm(forms.Form):
-    """Form for updating order status"""
     status = forms.ChoiceField(
         choices=Order.ORDER_STATUS_CHOICES,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     notes = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Add notes about this status change'})
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
     )
 
 
-class ReturnStatusForm(forms.Form):
-    """Form for updating return status"""
-    status = forms.ChoiceField(
-        choices=Return.RETURN_STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    refund_status = forms.ChoiceField(
-        choices=Return.REFUND_STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    notes = forms.CharField(
+class UserFilterForm(forms.Form):
+    search = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Add notes about this status change'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Search by email or name'})
     )
-
-
-class UserForm(forms.ModelForm):
-    """Form for User management"""
-    class Meta:
-        model = User
-        fields = ['email', 'name', 'phone', 'role', 'is_active', 'is_staff', 'is_email_verified']
-        widgets = {
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_email_verified': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
-
-class DateRangeFilterForm(forms.Form):
-    """Form for filtering reports by date range"""
-    start_date = forms.DateField(
+    role = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Roles')] + list(User.ROLE_CHOICES),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    is_active = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All'), ('1', 'Active'), ('0', 'Inactive')],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    date_joined_from = forms.DateField(
+        required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
-    end_date = forms.DateField(
+    date_joined_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+
+
+class ProductFilterForm(forms.Form):
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Search by name or SKU'})
+    )
+    category = forms.ModelChoiceField(
+        required=False,
+        queryset=Category.objects.filter(is_active=True),
+        empty_label='All Categories',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    is_active = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All'), ('1', 'Active'), ('0', 'Inactive')],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    is_featured = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All'), ('1', 'Featured'), ('0', 'Not Featured')],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    price_min = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Min Price'})
+    )
+    price_max = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Price'})
+    )
+
+
+class OrderFilterForm(forms.Form):
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Search by order number or email'})
+    )
+    status = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Statuses')] + list(Order.ORDER_STATUS_CHOICES),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    payment_status = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Payment Statuses')] + list(Order.PAYMENT_STATUS_CHOICES),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    date_from = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+    date_to = forms.DateField(
+        required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )

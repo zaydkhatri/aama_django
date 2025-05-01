@@ -1,9 +1,11 @@
+# Update the signals.py file in products app
+
 # products/signals.py
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from .models import Category, Product, ProductMedia, SEO, FabricColor
+from .models import Category, Product, ProductMedia, SEO, FabricColor, Size, ProductSize
 
 @receiver(pre_save, sender=Category)
 def ensure_category_slug(sender, instance, **kwargs):
@@ -42,6 +44,14 @@ def create_product_seo(sender, instance, created, **kwargs):
             keywords=instance.name,
             indexable=instance.is_active
         )
+        
+        # Auto-associate all existing sizes with this new product
+        sizes = Size.objects.filter(is_active=True)
+        for size in sizes:
+            ProductSize.objects.get_or_create(
+                product=instance,
+                size=size
+            )
 
 @receiver(post_save, sender=Product)
 def update_product_seo(sender, instance, created, **kwargs):
@@ -84,3 +94,17 @@ def sync_fabric_color_relationships(sender, instance, created, **kwargs):
     if created:
         # Add the fabric to the color's fabrics if it's not already there
         instance.color.fabrics.add(instance.fabric)
+
+# Add a new signal handler for Size to associate it with all products
+@receiver(post_save, sender=Size)
+def associate_size_with_all_products(sender, instance, created, **kwargs):
+    """
+    When a new size is created, associate it with all existing products.
+    """
+    if created:
+        products = Product.objects.filter(is_active=True)
+        for product in products:
+            ProductSize.objects.get_or_create(
+                product=product,
+                size=instance
+            )

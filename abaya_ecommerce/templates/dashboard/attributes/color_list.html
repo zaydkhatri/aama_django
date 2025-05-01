@@ -1,0 +1,210 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Colors - Admin Dashboard{% endblock %}
+
+{% block page_title %}Colors{% endblock %}
+
+{% block content %}
+<!-- Actions Bar -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900 mb-4 md:mb-0">Color Attributes</h1>
+    <a href="{% url 'dashboard:color_create' %}" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <i class="fa-solid fa-plus mr-2"></i>Add New Color
+    </a>
+</div>
+
+<!-- Search and Info -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row gap-4 justify-between">
+        <div class="w-full md:w-1/2">
+            <form method="get" action="{% url 'dashboard:color_list' %}" class="flex gap-2">
+                <div class="flex-1">
+                    <label for="search" class="sr-only">Search Colors</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" name="search" id="search" value="{{ search_query }}" placeholder="Search colors..." 
+                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="{% url 'dashboard:color_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Clear
+                </a>
+                {% endif %}
+            </form>
+        </div>
+        
+        <div class="w-full md:w-1/2 md:text-right mt-4 md:mt-0">
+            <p class="text-sm text-gray-600">Colors can be associated with fabrics to create valid color-fabric combinations for products.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Colors List -->
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color Code</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Associated Fabrics</th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for color in colors %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            {% if color.color_code %}
+                            <div class="w-10 h-10 rounded border border-gray-300" style="background-color: {{ color.color_code }};"></div>
+                            {% elif color.image %}
+                            <div class="w-10 h-10 rounded overflow-hidden">
+                                <img src="{{ color.image.url }}" alt="{{ color.name }}" class="w-full h-full object-cover">
+                            </div>
+                            {% else %}
+                            <div class="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
+                                <i class="fa-solid fa-palette text-gray-400"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ color.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ color.color_code|default:"-" }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if color.is_active %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Active
+                        </span>
+                        {% else %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Inactive
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ color.fabric_count }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <a href="{% url 'dashboard:color_edit' uuid=color.id %}" class="text-blue-600 hover:text-blue-900" title="Edit">
+                                <i class="fa-solid fa-edit"></i>
+                            </a>
+                            <a href="{% url 'dashboard:color_delete' uuid=color.id %}" class="text-red-600 hover:text-red-900" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No colors found. 
+                        <a href="{% url 'dashboard:color_create' %}" class="text-indigo-600 hover:text-indigo-900">Create one</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if colors.has_other_pages %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing
+                    <span class="font-medium">{{ colors.start_index }}</span>
+                    to
+                    <span class="font-medium">{{ colors.end_index }}</span>
+                    of
+                    <span class="font-medium">{{ colors.paginator.count }}</span>
+                    results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if colors.has_previous %}
+                    <a href="?page={{ colors.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <i class="fa-solid fa-chevron-left h-5 w-5"></i>
+                    </a>
+                    {% else %}
+                    <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                        <span class="sr-only">Previous</span>
+                        <i class="fa-solid fa-chevron-left h-5 w-5"></i>
+                    </span>
+                    {% endif %}
+                    
+                    {% for num in colors.paginator.page_range %}
+                        {% if colors.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                            {{ num }}
+                        </span>
+                        {% elif num > colors.number|add:'-3' and num < colors.number|add:'3' %}
+                        <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ num }}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if colors.has_next %}
+                    <a href="?page={{ colors.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <i class="fa-solid fa-chevron-right h-5 w-5"></i>
+                    </a>
+                    {% else %}
+                    <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                        <span class="sr-only">Next</span>
+                        <i class="fa-solid fa-chevron-right h-5 w-5"></i>
+                    </span>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Color Information -->
+<div class="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">About Color Attributes</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="text-sm text-gray-600 space-y-4">
+            <p>Colors represent the available color options for your products. Each color can be associated with specific fabrics to create valid combinations.</p>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            <strong>Tip:</strong> You can define a color using a color code (hex value) or by uploading an image for patterns or complex colors.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <p>Colors are associated with fabrics rather than directly with products. To make a color available for a product, first associate it with a fabric, then assign that fabric to the product.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

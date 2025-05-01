@@ -1,0 +1,297 @@
+
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if coupon %}Edit Coupon: {{ coupon.code }}{% else %}Add New Coupon{% endif %} - Admin Dashboard{% endblock %}
+
+{% block page_title %}{% if coupon %}Edit Coupon{% else %}Add New Coupon{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">{% if coupon %}Edit Coupon: {{ coupon.code }}{% else %}Add New Coupon{% endif %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="space-y-8">
+                <!-- Basic Information -->
+                <div>
+                    <h3 class="text-base font-semibold text-gray-800 mb-4">Basic Information</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Coupon Code -->
+                        <div>
+                            <label for="{{ form.code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Coupon Code <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="{{ form.code.name }}" id="{{ form.code.id_for_label }}" value="{{ form.code.value|default:'' }}" required
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md uppercase
+                                   {% if form.code.errors %}border-red-500{% endif %}">
+                            {% if form.code.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.code.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Enter a unique coupon code (e.g., SUMMER20, WELCOME10).</p>
+                        </div>
+                        
+                        <!-- Coupon Type -->
+                        <div>
+                            <label for="{{ form.type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Discount Type <span class="text-red-500">*</span>
+                            </label>
+                            <select name="{{ form.type.name }}" id="{{ form.type.id_for_label }}" required
+                                    class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                    {% if form.type.errors %}border-red-500{% endif %}">
+                                {% for value, display in form.type.field.choices %}
+                                <option value="{{ value }}" {% if form.type.value == value %}selected{% endif %}>{{ display }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.type.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.type.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Fixed amount (₹) or percentage (%) discount.</p>
+                        </div>
+                        
+                        <!-- Value -->
+                        <div>
+                            <label for="{{ form.value.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Discount Value <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" name="{{ form.value.name }}" id="{{ form.value.id_for_label }}" value="{{ form.value.value|default:'' }}" required
+                                   step="0.01" min="0.01"
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.value.errors %}border-red-500{% endif %}">
+                            {% if form.value.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.value.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">For percentage, enter value between 0-100. For fixed amount, enter the discount amount.</p>
+                        </div>
+                        
+                        <!-- Active -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                                   {% if form.is_active.value %}checked{% endif %}
+                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                                Active (Coupon can be applied to orders)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mt-4">
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Description
+                        </label>
+                        <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="3"
+                                 class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                 {% if form.description.errors %}border-red-500{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Optional: Add details about this coupon for internal reference.</p>
+                    </div>
+                </div>
+                
+                <!-- Restrictions -->
+                <div x-data="{ type: '{{ form.type.value|default:'PERCENTAGE' }}', showMaxDiscount: {% if form.type.value == 'PERCENTAGE' %}true{% else %}false{% endif %} }">
+                    <h3 class="text-base font-semibold text-gray-800 mb-4">Restrictions</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Min Order Amount -->
+                        <div>
+                            <label for="{{ form.min_order_amount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Minimum Order Amount
+                            </label>
+                            <input type="number" name="{{ form.min_order_amount.name }}" id="{{ form.min_order_amount.id_for_label }}" 
+                                   value="{{ form.min_order_amount.value|default:'' }}" step="0.01" min="0"
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.min_order_amount.errors %}border-red-500{% endif %}">
+                            {% if form.min_order_amount.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.min_order_amount.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Optional: Minimum order subtotal required to apply this coupon.</p>
+                        </div>
+                        
+                        <!-- Max Discount Amount (for percentage coupons) -->
+                        <div x-show="type === 'PERCENTAGE'">
+                            <label for="{{ form.max_discount_amount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Maximum Discount Amount
+                            </label>
+                            <input type="number" name="{{ form.max_discount_amount.name }}" id="{{ form.max_discount_amount.id_for_label }}" 
+                                   value="{{ form.max_discount_amount.value|default:'' }}" step="0.01" min="0"
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.max_discount_amount.errors %}border-red-500{% endif %}">
+                            {% if form.max_discount_amount.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.max_discount_amount.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Optional: Maximum discount amount that can be applied for percentage coupons.</p>
+                        </div>
+                        
+                        <!-- Usage Limit -->
+                        <div>
+                            <label for="{{ form.usage_limit.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Usage Limit
+                            </label>
+                            <input type="number" name="{{ form.usage_limit.name }}" id="{{ form.usage_limit.id_for_label }}" 
+                                   value="{{ form.usage_limit.value|default:'' }}" min="0"
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.usage_limit.errors %}border-red-500{% endif %}">
+                            {% if form.usage_limit.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.usage_limit.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Optional: Maximum number of times this coupon can be used. Leave empty for unlimited.</p>
+                        </div>
+                        
+                        {% if coupon %}
+                        <!-- Usage Count (for editing) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Current Usage
+                            </label>
+                            <input type="text" value="{{ coupon.usage_count }}" disabled
+                                   class="shadow-sm block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50">
+                            <p class="mt-1 text-xs text-gray-500">Number of times this coupon has been used.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <!-- Start Date -->
+                        <div>
+                            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Start Date <span class="text-red-500">*</span>
+                            </label>
+                            <input type="datetime-local" name="{{ form.start_date.name }}" id="{{ form.start_date.id_for_label }}" 
+                                   value="{% if form.start_date.value %}{{ form.start_date.value|date:'Y-m-d\TH:i' }}{% endif %}" required
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.start_date.errors %}border-red-500{% endif %}">
+                            {% if form.start_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Date and time when the coupon becomes valid.</p>
+                        </div>
+                        
+                        <!-- End Date -->
+                        <div>
+                            <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                End Date <span class="text-red-500">*</span>
+                            </label>
+                            <input type="datetime-local" name="{{ form.end_date.name }}" id="{{ form.end_date.id_for_label }}" 
+                                   value="{% if form.end_date.value %}{{ form.end_date.value|date:'Y-m-d\TH:i' }}{% endif %}" required
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                                   {% if form.end_date.errors %}border-red-500{% endif %}">
+                            {% if form.end_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.end_date.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Date and time when the coupon expires.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Category and Product Restrictions -->
+                <div>
+                    <h3 class="text-base font-semibold text-gray-800 mb-4">Category and Product Restrictions</h3>
+                    
+                    <div class="space-y-6">
+                        <!-- Category Restrictions -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Applicable Categories
+                            </label>
+                            <p class="text-xs text-gray-500 mb-3">Leave empty to apply to all categories.</p>
+                            <div class="border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    {% for category in categories %}
+                                    <div class="relative flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="categories" id="category_{{ category.id }}" value="{{ category.id }}"
+                                                   {% if selected_categories and category.id in selected_categories %}checked{% endif %}
+                                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="category_{{ category.id }}" class="font-medium text-gray-700">{{ category.name }}</label>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-span-3 text-sm text-gray-500 text-center py-4">
+                                        No categories available.
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Restrictions -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Applicable Products
+                            </label>
+                            <p class="text-xs text-gray-500 mb-3">Leave empty to apply to all products.</p>
+                            <div class="border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {% for product in popular_products %}
+                                    <div class="relative flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="products" id="product_{{ product.id }}" value="{{ product.id }}"
+                                                   {% if selected_products and product.id in selected_products %}checked{% endif %}
+                                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="product_{{ product.id }}" class="font-medium text-gray-700">{{ product.name }}</label>
+                                            <p class="text-gray-500">{{ product.sku }}</p>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-span-2 text-sm text-gray-500 text-center py-4">
+                                        No products available.
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="pt-6 border-t border-gray-200 mt-8">
+                <div class="flex justify-end">
+                    <a href="{% url 'dashboard:coupon_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% if coupon %}Update Coupon{% else %}Create Coupon{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('{{ form.type.id_for_label }}');
+        const maxDiscountField = document.getElementById('{{ form.max_discount_amount.id_for_label }}').parentElement;
+        
+        // Initial state
+        if (typeSelect.value !== 'PERCENTAGE') {
+            maxDiscountField.style.display = 'none';
+        }
+        
+        // Change event
+        typeSelect.addEventListener('change', function() {
+            if (this.value === 'PERCENTAGE') {
+                maxDiscountField.style.display = 'block';
+            } else {
+                maxDiscountField.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

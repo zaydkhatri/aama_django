@@ -1,0 +1,124 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Delete Size: {{ size.name }} - Admin Dashboard{% endblock %}
+
+{% block page_title %}Delete Size{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+        <h2 class="text-lg font-medium text-red-700">Delete Size: {{ size.name }}</h2>
+    </div>
+    
+    <div class="p-6">
+        {% if product_count > 0 %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fa-solid fa-exclamation-triangle text-yellow-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        <strong>Warning:</strong> This size is associated with {{ product_count }} products. 
+                        Deleting this size will remove it from all products.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <p class="text-gray-700 mb-6">Are you sure you want to delete the size <strong>{{ size.name }}</strong>? This action cannot be undone.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="flex items-center justify-between">
+                <a href="{% url 'dashboard:size_list' %}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Cancel
+                </a>
+                
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <i class="fa-solid fa-trash mr-2"></i>Delete Size
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if product_count > 0 %}
+<!-- Associated Products -->
+<div class="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Associated Products</h2>
+    </div>
+    
+    <div class="p-6">
+        <p class="text-gray-700 mb-4">This size is currently associated with the following products:</p>
+        
+        {% if product_count > 10 %}
+        <div class="mb-4">
+            <a href="{% url 'dashboard:product_list' %}?size={{ size.id }}" class="text-indigo-600 hover:text-indigo-900">
+                View all {{ product_count }} products with this size <i class="fa-solid fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="overflow-x-auto border border-gray-200 rounded-md">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for product in size.products.all|slice:":10" %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                {% if product.get_default_image %}
+                                <img class="h-10 w-10 rounded-md object-cover" src="{{ product.get_default_image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                <div class="h-10 w-10 rounded-md bg-gray-200 flex items-center justify-center">
+                                    <i class="fa-solid fa-image text-gray-400"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">
+                                <a href="{% url 'dashboard:product_detail' uuid=product.id %}" class="hover:text-indigo-600">
+                                    {{ product.name }}
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ product.sku }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{% url 'dashboard:product_detail' uuid=product.id %}" class="text-indigo-600 hover:text-indigo-900">
+                                View <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% if product_count > 10 %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                            <a href="{% url 'dashboard:product_list' %}?size={{ size.id }}" class="text-indigo-600 hover:text-indigo-900">
+                                View all {{ product_count }} products with this size
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

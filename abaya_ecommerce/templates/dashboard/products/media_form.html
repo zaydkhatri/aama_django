@@ -1,0 +1,299 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Add Media: {{ product.name }} - Admin Dashboard{% endblock %}
+
+{% block page_title %}Add Product Media{% endblock %}
+
+{% block content %}
+<!-- Action bar -->
+<div class="flex flex-col md:flex-row justify-between mb-6 gap-4">
+    <div class="flex-1">
+        <h1 class="text-2xl font-semibold text-gray-900">{{ product.name }}</h1>
+        <div class="text-sm text-gray-500 mt-1">SKU: {{ product.sku }}</div>
+    </div>
+    
+    <div class="flex flex-wrap justify-end gap-2">
+        <a href="{% url 'dashboard:product_media' uuid=product.id %}" class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            <i class="fa-solid fa-arrow-left mr-2"></i>Back to Media
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Add Media to {{ product.name }}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post" enctype="multipart/form-data" x-data="{ mediaType: 'IMAGE', isDefault: false, previewUrl: null }">
+            {% csrf_token %}
+            
+            <!-- Media Type Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Media Type</label>
+                <div class="flex space-x-4">
+                    <div class="flex items-center">
+                        <input type="radio" id="type_image" name="{{ form.type.name }}" value="IMAGE" 
+                               x-model="mediaType"
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                        <label for="type_image" class="ml-2 block text-sm text-gray-700">
+                            Image
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="radio" id="type_video" name="{{ form.type.name }}" value="VIDEO" 
+                               x-model="mediaType"
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                        <label for="type_video" class="ml-2 block text-sm text-gray-700">
+                            Video
+                        </label>
+                    </div>
+                </div>
+                {% if form.type.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.type.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- File Upload with Preview -->
+            <div class="mb-6">
+                <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    File <span class="text-red-500">*</span>
+                </label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
+                     :class="{'bg-gray-50': previewUrl}">
+                    
+                    <div class="space-y-2 text-center" x-show="!previewUrl">
+                        <div class="flex text-sm text-gray-600">
+                            <label for="{{ form.file.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                <span x-text="mediaType === 'IMAGE' ? 'Upload an image' : 'Upload a video'"></span>
+                                <input type="file" id="{{ form.file.id_for_label }}" name="{{ form.file.name }}" 
+                                       @change="previewUrl = URL.createObjectURL($event.target.files[0])"
+                                       accept="image/*,video/*"
+                                       class="sr-only" required>
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            <span x-show="mediaType === 'IMAGE'">PNG, JPG, WebP up to 5MB</span>
+                            <span x-show="mediaType === 'VIDEO'">MP4, WebM up to 50MB</span>
+                        </p>
+                    </div>
+                    
+                    <!-- Preview container -->
+                    <div x-show="previewUrl" class="w-full">
+                        <div class="flex justify-end mb-2">
+                            <button type="button" @click="previewUrl = null" class="text-sm text-red-600 hover:text-red-900">
+                                <i class="fa-solid fa-times mr-1"></i> Remove
+                            </button>
+                        </div>
+                        
+                        <!-- Image preview -->
+                        <div x-show="mediaType === 'IMAGE'" class="overflow-hidden rounded-lg bg-gray-100">
+                            <img :src="previewUrl" alt="Preview" class="h-48 w-full object-cover">
+                        </div>
+                        
+                        <!-- Video preview -->
+                        <div x-show="mediaType === 'VIDEO'" class="overflow-hidden rounded-lg bg-gray-100">
+                            <video :src="previewUrl" controls class="h-48 w-full object-cover"></video>
+                        </div>
+                    </div>
+                </div>
+                {% if form.file.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.file.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Alt Text -->
+            <div class="mb-6">
+                <label for="{{ form.alt.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Alt Text / Description
+                </label>
+                <input type="text" name="{{ form.alt.name }}" id="{{ form.alt.id_for_label }}" value="{{ form.alt.value|default:'' }}"
+                       class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                       {% if form.alt.errors %}border-red-500{% endif %}">
+                <p class="mt-1 text-xs text-gray-500">
+                    <span x-show="mediaType === 'IMAGE'">Describe the image for accessibility and SEO (recommended)</span>
+                    <span x-show="mediaType === 'VIDEO'">Brief description of the video content</span>
+                </p>
+                {% if form.alt.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.alt.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Is Default (for images only) -->
+            <div class="mb-6" x-show="mediaType === 'IMAGE'">
+                <div class="flex items-center">
+                    <input type="checkbox" name="{{ form.is_default.name }}" id="{{ form.is_default.id_for_label }}" 
+                           x-model="isDefault"
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="{{ form.is_default.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                        Set as default product image
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 ml-6">This image will be used as the main product image across the site</p>
+                {% if form.is_default.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.is_default.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Sort Order -->
+            <div class="mb-6">
+                <label for="{{ form.sort_order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Sort Order
+                </label>
+                <input type="number" name="{{ form.sort_order.name }}" id="{{ form.sort_order.id_for_label }}" value="{{ form.sort_order.value|default:'0' }}" min="0"
+                       class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                       {% if form.sort_order.errors %}border-red-500{% endif %}">
+                <p class="mt-1 text-xs text-gray-500">Lower numbers appear first</p>
+                {% if form.sort_order.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.sort_order.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="pt-5 border-t border-gray-200">
+                <div class="flex justify-end">
+                    <a href="{% url 'dashboard:product_media' uuid=product.id %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Add Media
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Media Guidelines -->
+<div class="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Media Guidelines</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div x-data="{ open: true }">
+                <div @click="open = !open" class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-sm font-medium text-gray-900">Image Guidelines</h3>
+                    <i :class="open ? 'fa-chevron-up' : 'fa-chevron-down'" class="fa-solid text-gray-400"></i>
+                </div>
+                
+                <div x-show="open" x-transition class="mt-2">
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Use high-quality images (recommended 1200x1200px)
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Keep file size under 5MB
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Use white or transparent background
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Show product from multiple angles
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Include close-up shots of details
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Ensure accurate color representation
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div x-data="{ open: true }">
+                <div @click="open = !open" class="flex justify-between items-center cursor-pointer">
+                    <h3 class="text-sm font-medium text-gray-900">Video Guidelines</h3>
+                    <i :class="open ? 'fa-chevron-up' : 'fa-chevron-down'" class="fa-solid text-gray-400"></i>
+                </div>
+                
+                <div x-show="open" x-transition class="mt-2">
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Keep videos short (30-60 seconds)
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Recommended resolution: 1080p
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Keep file size under 50MB
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Show the product in use
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Ensure good lighting and clear audio if applicable
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i>
+                            Highlight key features and benefits
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enable drag and drop file upload
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropArea = document.querySelector('input[type="file"]').closest('div.border-dashed');
+        const fileInput = document.querySelector('input[type="file"]');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('bg-indigo-50', 'border-indigo-300');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('bg-indigo-50', 'border-indigo-300');
+        }
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                fileInput.files = files;
+                // Trigger change event for Alpine.js to pick up
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+</script>
+{% endblock %}

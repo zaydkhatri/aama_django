@@ -1,0 +1,277 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Abaya Admin Dashboard{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900" x-data="{ sidebarOpen: false }">
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        <div x-cloak 
+             :class="sidebarOpen ? 'block' : 'hidden'" 
+             @click="sidebarOpen = false" 
+             class="fixed inset-0 z-20 transition-opacity bg-black opacity-50 lg:hidden">
+        </div>
+        
+        <div x-cloak 
+             :class="sidebarOpen ? 'translate-x-0 ease-out' : '-translate-x-full ease-in'" 
+             class="fixed inset-y-0 left-0 z-30 w-64 overflow-y-auto transition duration-300 transform bg-gray-800 lg:translate-x-0 lg:static lg:inset-0">
+            
+            <div class="flex items-center justify-center mt-8">
+                <div class="flex items-center">
+                    <img src="{% static 'dashboard/img/logo.png' %}" alt="Logo" class="h-12 w-auto">
+                    <span class="mx-2 text-xl font-semibold text-white">Abaya Admin</span>
+                </div>
+            </div>
+            
+            <nav class="mt-10">
+                <!-- Dashboard -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if request.resolver_match.url_name == 'home' %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:home' %}">
+                    <i class="fa-solid fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                
+                <!-- Products -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if 'product' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:product_list' %}">
+                    <i class="fa-solid fa-box mr-3"></i>
+                    Products
+                </a>
+                
+                <!-- Categories -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if 'category' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:category_list' %}">
+                    <i class="fa-solid fa-tags mr-3"></i>
+                    Categories
+                </a>
+                
+                <!-- Attributes - Dropdown -->
+                <div x-data="{ open: false }" class="mt-4">
+                    <button @click="open = !open" class="flex items-center justify-between w-full px-6 py-2 text-gray-300 hover:bg-gray-700 hover:text-gray-100">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-sliders mr-3"></i>
+                            Attributes
+                        </span>
+                        <i class="fa-solid" :class="open ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                    </button>
+                    
+                    <div x-show="open" x-transition class="pl-6">
+                        <a class="flex items-center px-6 py-2 mt-2 {% if 'size' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:size_list' %}">
+                            <i class="fa-solid fa-ruler mr-3"></i>
+                            Sizes
+                        </a>
+                        <a class="flex items-center px-6 py-2 mt-2 {% if 'color' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:color_list' %}">
+                            <i class="fa-solid fa-palette mr-3"></i>
+                            Colors
+                        </a>
+                        <a class="flex items-center px-6 py-2 mt-2 {% if 'fabric' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:fabric_list' %}">
+                            <i class="fa-solid fa-socks mr-3"></i>
+                            Fabrics
+                        </a>
+                        <a class="flex items-center px-6 py-2 mt-2 {% if 'currency' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:currency_list' %}">
+                            <i class="fa-solid fa-money-bill-wave mr-3"></i>
+                            Currencies
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Orders -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if 'order' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:order_list' %}">
+                    <i class="fa-solid fa-shopping-cart mr-3"></i>
+                    Orders
+                </a>
+                
+                <!-- Coupons -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if 'coupon' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:coupon_list' %}">
+                    <i class="fa-solid fa-ticket-alt mr-3"></i>
+                    Coupons
+                </a>
+                
+                <!-- Users -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if 'user' in request.resolver_match.url_name %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:user_list' %}">
+                    <i class="fa-solid fa-users mr-3"></i>
+                    Users
+                </a>
+                
+                <!-- Reports - Dropdown -->
+                <div x-data="{ open: false }" class="mt-4">
+                    <button @click="open = !open" class="flex items-center justify-between w-full px-6 py-2 text-gray-300 hover:bg-gray-700 hover:text-gray-100">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-chart-bar mr-3"></i>
+                            Reports
+                        </span>
+                        <i class="fa-solid" :class="open ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                    </button>
+                    
+                    <div x-show="open" x-transition class="pl-6">
+                        <a class="flex items-center px-6 py-2 mt-2 {% if request.resolver_match.url_name == 'sales_report' %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:sales_report' %}">
+                            <i class="fa-solid fa-chart-line mr-3"></i>
+                            Sales Report
+                        </a>
+                        <a class="flex items-center px-6 py-2 mt-2 {% if request.resolver_match.url_name == 'product_report' %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:product_report' %}">
+                            <i class="fa-solid fa-box-open mr-3"></i>
+                            Product Report
+                        </a>
+                        <a class="flex items-center px-6 py-2 mt-2 {% if request.resolver_match.url_name == 'customer_report' %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                           href="{% url 'dashboard:customer_report' %}">
+                            <i class="fa-solid fa-user-tag mr-3"></i>
+                            Customer Report
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Activity Logs -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if request.resolver_match.url_name == 'activity_logs' %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:activity_logs' %}">
+                    <i class="fa-solid fa-history mr-3"></i>
+                    Activity Logs
+                </a>
+                
+                <!-- Settings -->
+                <a class="flex items-center px-6 py-2 mt-4 {% if request.resolver_match.url_name == 'settings' %}text-gray-100 bg-gray-700{% else %}text-gray-300 hover:bg-gray-700 hover:text-gray-100{% endif %}" 
+                   href="{% url 'dashboard:settings' %}">
+                    <i class="fa-solid fa-cog mr-3"></i>
+                    Settings
+                </a>
+                
+                <div class="mt-8 border-t border-gray-700 pt-4 pb-2">
+                    <a class="flex items-center px-6 py-2 mt-4 text-gray-300 hover:bg-gray-700 hover:text-gray-100" 
+                       href="{% url 'home' %}" target="_blank">
+                        <i class="fa-solid fa-external-link-alt mr-3"></i>
+                        View Site
+                    </a>
+                    <a class="flex items-center px-6 py-2 mt-4 text-gray-300 hover:bg-gray-700 hover:text-gray-100" 
+                       href="{% url 'logout' %}">
+                        <i class="fa-solid fa-sign-out-alt mr-3"></i>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+        </div>
+        
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top header -->
+            <header class="flex items-center justify-between px-6 py-4 bg-white border-b">
+                <div class="flex items-center">
+                    <button @click="sidebarOpen = true" class="text-gray-500 focus:outline-none lg:hidden">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="text-2xl font-semibold text-gray-800 ml-4">
+                        {% block page_title %}Dashboard{% endblock %}
+                    </h1>
+                </div>
+                
+                <div class="flex items-center">
+                    <!-- Notifications -->
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" class="flex mx-4 text-gray-600 focus:outline-none">
+                            <i class="fa-solid fa-bell"></i>
+                        </button>
+                        
+                        <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" 
+                             x-transition:enter-start="transform opacity-0 scale-95" 
+                             x-transition:enter-end="transform opacity-100 scale-100" 
+                             x-transition:leave="transition ease-in duration-75" 
+                             x-transition:leave-start="transform opacity-100 scale-100" 
+                             x-transition:leave-end="transform opacity-0 scale-95" 
+                             class="absolute right-0 w-64 mt-2 py-2 bg-white rounded-md shadow-xl z-20">
+                            <div class="px-4 py-2 text-xs text-gray-400">Notifications</div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">New order received</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Product out of stock</a>
+                        </div>
+                    </div>
+                    
+                    <!-- User dropdown -->
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" class="flex items-center focus:outline-none">
+                            <div class="w-8 h-8 overflow-hidden rounded-full">
+                                <img class="object-cover w-full h-full" src="https://ui-avatars.com/api/?name={{ request.user.name|urlencode }}&background=0D8ABC&color=fff" alt="Profile">
+                            </div>
+                            
+                            <span class="mx-2 font-medium">{{ request.user.name }}</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        
+                        <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" 
+                             x-transition:enter-start="transform opacity-0 scale-95" 
+                             x-transition:enter-end="transform opacity-100 scale-100" 
+                             x-transition:leave="transition ease-in duration-75" 
+                             x-transition:leave-start="transform opacity-100 scale-100" 
+                             x-transition:leave-end="transform opacity-0 scale-95" 
+                             class="absolute right-0 w-48 mt-2 py-2 bg-white rounded-md shadow-xl z-20">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+                <div class="container px-6 py-8 mx-auto">
+                    <!-- Flash messages -->
+                    {% if messages %}
+                    <div class="mb-8">
+                        {% for message in messages %}
+                        <div class="flex items-center p-4 mb-4 text-sm {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700{% elif message.tags == 'info' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-700{% endif %} rounded-lg" role="alert">
+                            <div>
+                                {% if message.tags == 'success' %}
+                                <i class="fa-solid fa-check-circle mr-2"></i>
+                                {% elif message.tags == 'error' %}
+                                <i class="fa-solid fa-times-circle mr-2"></i>
+                                {% elif message.tags == 'warning' %}
+                                <i class="fa-solid fa-exclamation-circle mr-2"></i>
+                                {% elif message.tags == 'info' %}
+                                <i class="fa-solid fa-info-circle mr-2"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Content area -->
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+            
+            <!-- Footer -->
+            <footer class="bg-white p-4 text-center text-gray-500 text-sm">
+                <p>&copy; 2025 Abaya Ecommerce. All rights reserved.</p>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Custom JS -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

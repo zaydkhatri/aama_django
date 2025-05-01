@@ -72,13 +72,10 @@ class ProductVariantForm(forms.Form):
         product = kwargs.pop('product', None)
         super().__init__(*args, **kwargs)
         
-        if product:
-            # Filter sizes to those available for this product
-            self.fields['size'].queryset = Size.objects.filter(
-                is_active=True,
-                products=product
-            )
+        # Don't filter sizes - show all active sizes
+        self.fields['size'].queryset = Size.objects.filter(is_active=True)
             
+        if product:
             # Filter colors to those available for this product's fabrics
             available_fabrics = Fabric.objects.filter(products=product)
             self.fields['color'].queryset = Color.objects.filter(

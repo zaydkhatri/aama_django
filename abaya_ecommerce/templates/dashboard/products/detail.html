@@ -1,0 +1,280 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Admin Dashboard{% endblock %}
+
+{% block page_title %}Product Details{% endblock %}
+
+{% block content %}
+<!-- Action bar -->
+<div class="flex flex-col md:flex-row justify-between mb-6 gap-4">
+    <div class="flex-1">
+        <h1 class="text-2xl font-semibold text-gray-900">{{ product.name }}</h1>
+        <div class="text-sm text-gray-500 mt-1">SKU: {{ product.sku }}</div>
+    </div>
+    
+    <div class="flex flex-wrap justify-end gap-2">
+        <a href="{% url 'dashboard:product_edit' uuid=product.id %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <i class="fa-solid fa-edit mr-2"></i>Edit Product
+        </a>
+        <a href="{% url 'dashboard:product_media' uuid=product.id %}" class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+            <i class="fa-solid fa-images mr-2"></i>Manage Media
+        </a>
+        <a href="{% url 'dashboard:product_list' %}" class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            <i class="fa-solid fa-arrow-left mr-2"></i>Back to List
+        </a>
+        <a href="{% url 'product_detail' slug=product.slug %}" target="_blank" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <i class="fa-solid fa-eye mr-2"></i>View on Site
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Product Info & Status -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Product Information</h2>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Name</h3>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.name }}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Price</h3>
+                        <p class="mt-1 text-sm text-gray-900">₹{{ product.price }}</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Sale Price</h3>
+                        <p class="mt-1 text-sm text-gray-900">
+                            {% if product.sale_price %}
+                            ₹{{ product.sale_price }}
+                            <span class="text-xs text-green-600 ml-2">
+                                {{ product.get_discount_percentage }}% off
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400">No sale price</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Created At</h3>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.created_at|date:"F j, Y" }}</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Last Updated</h3>
+                        <p class="mt-1 text-sm text-gray-900">{{ product.updated_at|date:"F j, Y" }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-500">Description</h3>
+                    <div class="mt-1 prose max-w-full">
+                        {% if product.description %}
+                            {{ product.description|linebreaks }}
+                        {% else %}
+                            <p class="text-gray-400">No description provided</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Categories Section -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Categories</h2>
+            </div>
+            
+            <div class="p-6">
+                <div class="flex flex-wrap gap-2">
+                    {% for category in categories %}
+                    <span class="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
+                        {{ category.name }}
+                    </span>
+                    {% empty %}
+                    <p class="text-gray-400">No categories assigned</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Attributes Section -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Product Attributes</h2>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Sizes -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Sizes</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for size in sizes %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                                {{ size.name }}
+                            </span>
+                            {% empty %}
+                            <p class="text-gray-400">No sizes assigned</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Fabrics -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Fabrics</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for fabric in fabrics %}
+                            <span class="px-3 py-1 {% if fabric.is_default %}bg-purple-100 text-purple-800{% else %}bg-gray-100 text-gray-800{% endif %} text-sm font-medium rounded-full">
+                                {{ fabric.name }}
+                                {% if fabric.is_default %}(Default){% endif %}
+                            </span>
+                            {% empty %}
+                            <p class="text-gray-400">No fabrics assigned</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Images & Quick Actions -->
+    <div class="space-y-6">
+        <!-- Main Image -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Main Image</h2>
+            </div>
+            
+            <div class="p-6">
+                {% if product.default_image %}
+                <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
+                    <img src="{{ product.default_image.url }}" alt="{{ product.name }}" class="w-full h-full object-center object-cover">
+                </div>
+                {% else %}
+                <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-image text-gray-400 text-5xl"></i>
+                </div>
+                {% endif %}
+                
+                <div class="mt-4 flex justify-center">
+                    <a href="{% url 'dashboard:product_media' uuid=product.id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fa-solid fa-images mr-2"></i>
+                        Manage Media
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Media Gallery Preview -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Gallery</h2>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4">
+                    {% for image in images|slice:":4" %}
+                    <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
+                        <img src="{{ image.file.url }}" alt="{{ image.alt|default:product.name }}" class="w-full h-full object-center object-cover">
+                    </div>
+                    {% empty %}
+                    <div class="col-span-2 text-center py-6 text-gray-400">
+                        No additional images found
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if images.count > 4 %}
+                <div class="mt-4 text-center">
+                    <a href="{% url 'dashboard:product_media' uuid=product.id %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                        View all {{ images.count }} images
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-3">
+                    <a href="{% url 'dashboard:product_edit' uuid=product.id %}" class="block w-full py-2 px-4 text-center text-white bg-blue-600 hover:bg-blue-700 rounded-md">
+                        <i class="fa-solid fa-edit mr-2"></i>Edit Product
+                    </a>
+                    
+                    <a href="{% url 'dashboard:product_media' uuid=product.id %}" class="block w-full py-2 px-4 text-center text-white bg-purple-600 hover:bg-purple-700 rounded-md">
+                        <i class="fa-solid fa-images mr-2"></i>Manage Media
+                    </a>
+                    
+                    <a href="{% url 'product_detail' slug=product.slug %}" target="_blank" class="block w-full py-2 px-4 text-center text-white bg-green-600 hover:bg-green-700 rounded-md">
+                        <i class="fa-solid fa-eye mr-2"></i>View on Site
+                    </a>
+                    
+                    <a href="{% url 'dashboard:product_delete' uuid=product.id %}" class="block w-full py-2 px-4 text-center text-white bg-red-600 hover:bg-red-700 rounded-md">
+                        <i class="fa-solid fa-trash mr-2"></i>Delete Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEO Information -->
+<div class="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">SEO Information</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Meta Title</h3>
+                <p class="mt-1 text-sm text-gray-900">
+                    {% if product.meta_title %}
+                    {{ product.meta_title }}
+                    {% else %}
+                    <span class="text-gray-400">Using product name</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Meta Keywords</h3>
+                <p class="mt-1 text-sm text-gray-900">
+                    {% if product.meta_keywords %}
+                    {{ product.meta_keywords }}
+                    {% else %}
+                    <span class="text-gray-400">No keywords defined</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="md:col-span-2">
+                <h3 class="text-sm font-medium text-gray-500">Meta Description</h3>
+                <p class="mt-1 text-sm text-gray-900">
+                    {% if product.meta_description %}
+                    {{ product.meta_description }}
+                    {% else %}
+                    <span class="text-gray-400">No meta description defined</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

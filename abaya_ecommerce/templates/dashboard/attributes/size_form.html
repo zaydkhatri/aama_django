@@ -1,0 +1,112 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if size %}Edit Size: {{ size.name }}{% else %}Add New Size{% endif %} - Admin Dashboard{% endblock %}
+
+{% block page_title %}{% if size %}Edit Size{% else %}Add New Size{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">{% if size %}Edit Size: {{ size.name }}{% else %}Add New Size{% endif %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Name Field -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Size Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" value="{{ form.name.value|default:'' }}" required
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                           {% if form.name.errors %}border-red-500{% endif %}">
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Example: S, M, L, XL, XXL, 38, 40, 42, etc.</p>
+                </div>
+                
+                <!-- Sort Order Field -->
+                <div>
+                    <label for="{{ form.sort_order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Sort Order
+                    </label>
+                    <input type="number" name="{{ form.sort_order.name }}" id="{{ form.sort_order.id_for_label }}" value="{{ form.sort_order.value|default:'0' }}"
+                           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md
+                           {% if form.sort_order.errors %}border-red-500{% endif %}">
+                    {% if form.sort_order.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.sort_order.errors|join:", " }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Determines the display order. Lower numbers appear first.</p>
+                </div>
+                
+                <!-- Active Field -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" 
+                               {% if form.is_active.value %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">Active</label>
+                        <p class="text-gray-500">Inactive sizes won't be available for selection on product pages.</p>
+                    </div>
+                </div>
+                
+                {% if size %}
+                <!-- Product Count Info (for edit mode) -->
+                <div class="rounded-md bg-blue-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fa-solid fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3 flex-1 md:flex md:justify-between">
+                            <p class="text-sm text-blue-700">
+                                This size is currently associated with <strong>{{ product_count }}</strong> products.
+                            </p>
+                            {% if product_count > 0 %}
+                            <p class="mt-3 text-sm md:mt-0 md:ml-6">
+                                <a href="{% url 'dashboard:product_list' %}?size={{ size.id }}" class="whitespace-nowrap font-medium text-blue-700 hover:text-blue-600">
+                                    View products <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Info for create mode -->
+                <div class="rounded-md bg-blue-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fa-solid fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                New sizes are automatically associated with all products in your store.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="pt-6 border-t border-gray-200 mt-6">
+                <div class="flex justify-end">
+                    <a href="{% url 'dashboard:size_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% if size %}Update Size{% else %}Create Size{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

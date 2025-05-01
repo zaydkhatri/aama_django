@@ -166,11 +166,8 @@ def product_detail(request, slug):
     # Get all product images for gallery
     product.all_images = product.media.filter(type='IMAGE').order_by('sort_order')
     
-    # Get available sizes for this product
-    sizes = Size.objects.filter(
-        is_active=True,
-        products=product
-    ).order_by('sort_order')
+    # Get all active sizes instead of filtering by product
+    sizes = Size.objects.filter(is_active=True).order_by('sort_order')
     
     # Get available fabrics for this product
     fabrics = Fabric.objects.filter(
@@ -186,7 +183,7 @@ def product_detail(request, slug):
             fabrics=fabric
         ).values('id', 'name', 'color_code'))
     
-    # Get variant selection form
+    # Get variant selection form - no need to modify this as it should work with all sizes now
     variant_form = ProductVariantForm(product=product)
     
     # Get reviews
@@ -433,11 +430,8 @@ def get_product_attributes_api(request, product_id):
     try:
         product = Product.objects.get(id=product_id)
         
-        # Get sizes
-        sizes = Size.objects.filter(
-            products=product,
-            is_active=True
-        ).values('id', 'name')
+        # Get all active sizes (not filtering by product anymore)
+        sizes = Size.objects.filter(is_active=True).values('id', 'name')
         
         # Get fabrics
         fabrics = Fabric.objects.filter(
